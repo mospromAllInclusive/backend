@@ -13,5 +13,6 @@ func NewHandlers(
 		newLoginHandler(authService),
 		newRegisterHandler(authService, userService),
 		newInfoHandler(userService),
+		newListHandler(userService),
 	}
 }

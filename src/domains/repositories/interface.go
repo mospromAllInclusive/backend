@@ -24,6 +24,7 @@ type IUsersRepository interface {
 	CreateUser(ctx context.Context, user *entities.User) (*entities.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*entities.User, error)
 	GetUserByID(ctx context.Context, id int64) (*entities.User, error)
+	ListUsers(ctx context.Context) ([]*entities.User, error)
 }
 
 type ITablesRepository interface {

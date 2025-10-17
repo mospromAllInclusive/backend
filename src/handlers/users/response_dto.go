@@ -30,3 +30,13 @@ func newUserInfoResponse(user *entities.User) *userInfoResponse {
 		CreatedAt: user.CreatedAt,
 	}
 }
+
+type usersListResponse []*userInfoResponse
+
+func newUsersListResponse(users []*entities.User) usersListResponse {
+	res := make(usersListResponse, 0, len(users))
+	for _, user := range users {
+		res = append(res, newUserInfoResponse(user))
+	}
+	return res
+}

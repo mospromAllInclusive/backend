@@ -11,6 +11,7 @@ type IUsersService interface {
 	AddUser(ctx context.Context, user *entities.User) (*entities.User, error)
 	FindUserByEmail(ctx context.Context, email string) (*entities.User, error)
 	FindUserByID(ctx context.Context, id int64) (*entities.User, error)
+	ListUsers(ctx context.Context) ([]*entities.User, error)
 }
 
 type IAuthService interface {

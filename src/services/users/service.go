@@ -36,3 +36,7 @@ func (s *service) FindUserByID(ctx context.Context, id int64) (*entities.User, e
 	}
 	return res, err
 }
+
+func (s *service) ListUsers(ctx context.Context) ([]*entities.User, error) {
+	return s.repo.ListUsers(ctx)
+}

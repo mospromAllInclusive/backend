@@ -53,3 +53,15 @@ func (r *usersRepository) GetUserByID(ctx context.Context, id int64) (*entities.
 	err := r.executor.Run(ctx, &user, q)
 	return &user, err
 }
+
+func (r *usersRepository) ListUsers(ctx context.Context) ([]*entities.User, error) {
+	q := sqrl.Select("*").
+		From(usersTable).
+		Where(sqrl.Eq{"deleted_at": nil}).
+		OrderBy("name").
+		PlaceholderFormat(sqrl.Dollar)
+
+	var users []*entities.User
+	err := r.executor.Run(ctx, &users, q)
+	return users, err
+}
