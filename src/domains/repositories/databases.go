@@ -4,6 +4,7 @@ import (
 	"backend/src/domains/entities"
 	"backend/src/modules/sql_executor"
 	"context"
+	"time"
 
 	"github.com/elgris/sqrl"
 )
@@ -50,6 +51,16 @@ deleted_at = null RETURNING *`)
 		return nil, err
 	}
 	return upsertedUsersDatabase, err
+}
+
+func (r *databasesRepository) DeleteUsersDatabaseRelation(ctx context.Context, userID, databaseID int64) error {
+	q := sqrl.Update(usersDatabasesTable).
+		Set("deleted_at", time.Now()).
+		Where(sqrl.Eq{"user_id": userID, "database_id": databaseID}).
+		PlaceholderFormat(sqrl.Dollar)
+
+	_, err := r.executor.Exec(ctx, q)
+	return err
 }
 
 func (r *databasesRepository) GetDatabaseByID(ctx context.Context, id int64) (*entities.Database, error) {

@@ -35,6 +35,8 @@ type ITablesService interface {
 
 type IDatabasesService interface {
 	AddDatabase(ctx context.Context, userID int64, name string) (*entities.Database, error)
+	UpsertUsersDatabase(ctx context.Context, usersDatabase *entities.UsersDatabase) (*entities.UsersDatabase, error)
+	DeleteUsersDatabaseRelation(ctx context.Context, userID, databaseID int64) error
 	GetUsersDatabases(ctx context.Context, userID int64) ([]*entities.UsersDatabase, error)
 	GetDatabasesUsers(ctx context.Context, databaseID int64) ([]*entities.DatabasesUser, error)
 	CheckUserRole(ctx context.Context, userID, databaseID int64, requiredRole entities.Role) (bool, error)

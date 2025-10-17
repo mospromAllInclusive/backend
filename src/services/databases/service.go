@@ -29,12 +29,20 @@ func (s *service) AddDatabase(ctx context.Context, userID int64, name string) (*
 		Role:       entities.RoleAdmin,
 	}
 
-	_, err = s.repo.UpsertUsersDatabase(ctx, usersDatabase)
+	_, err = s.UpsertUsersDatabase(ctx, usersDatabase)
 	if err != nil {
 		return nil, err
 	}
 
 	return createdDatabase, nil
+}
+
+func (s *service) UpsertUsersDatabase(ctx context.Context, usersDatabase *entities.UsersDatabase) (*entities.UsersDatabase, error) {
+	return s.repo.UpsertUsersDatabase(ctx, usersDatabase)
+}
+
+func (s *service) DeleteUsersDatabaseRelation(ctx context.Context, userID, databaseID int64) error {
+	return s.repo.DeleteUsersDatabaseRelation(ctx, userID, databaseID)
 }
 
 func (s *service) GetUsersDatabases(ctx context.Context, userID int64) ([]*entities.UsersDatabase, error) {

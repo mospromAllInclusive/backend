@@ -47,6 +47,7 @@ type IDatabasesRepository interface {
 	ICommonRepository
 	AddDatabase(ctx context.Context, name string) (*entities.Database, error)
 	UpsertUsersDatabase(ctx context.Context, usersDatabase *entities.UsersDatabase) (*entities.UsersDatabase, error)
+	DeleteUsersDatabaseRelation(ctx context.Context, userID, databaseID int64) error
 	GetDatabaseByID(ctx context.Context, id int64) (*entities.Database, error)
 	GetUsersDatabases(ctx context.Context, userID int64) ([]*entities.UsersDatabase, error)
 	GetDatabasesUsers(ctx context.Context, databaseID int64) ([]*entities.DatabasesUser, error)

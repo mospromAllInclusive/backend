@@ -54,6 +54,7 @@ func NewTablesResponse(tables []*entities.Table) TablesResponse {
 }
 
 type UserInfoResponse struct {
+	ID        int64     `json:"id"`
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
@@ -61,6 +62,7 @@ type UserInfoResponse struct {
 
 func NewUserInfoResponse(user *entities.User) *UserInfoResponse {
 	return &UserInfoResponse{
+		ID:        user.ID,
 		Name:      user.Name,
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt,
