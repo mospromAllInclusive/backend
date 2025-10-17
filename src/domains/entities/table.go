@@ -62,6 +62,9 @@ func (t *Table) ReturningCols() []string {
 	returningCols := make([]string, 0, 1+len(t.Columns))
 	returningCols = append(returningCols, "id")
 	for _, col := range t.Columns {
+		if col.DeletedAt != nil {
+			continue
+		}
 		returningCols = append(returningCols, col.ID)
 	}
 
@@ -87,9 +90,10 @@ func (t *DBTable) ToTable() *Table {
 }
 
 type TableColumn struct {
-	Name string     `json:"name"`
-	Type ColumnType `json:"type"`
-	ID   string     `json:"id"`
+	Name      string     `json:"name"`
+	Type      ColumnType `json:"type"`
+	ID        string     `json:"id"`
+	DeletedAt *time.Time `json:"deleted_at"`
 }
 
 type ColumnType string

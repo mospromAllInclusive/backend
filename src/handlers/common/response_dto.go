@@ -23,6 +23,9 @@ type columnForResponse struct {
 func NewTableResponse(table *entities.Table) *TableResponse {
 	cols := make([]columnForResponse, 0, len(table.Columns))
 	for _, col := range table.Columns {
+		if col.DeletedAt != nil {
+			continue
+		}
 		cols = append(cols, columnForResponse{
 			Name: col.Name,
 			Type: col.Type,

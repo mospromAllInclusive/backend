@@ -12,6 +12,8 @@ func NewHandlers(
 	return []handlers.IHandler{
 		newCreateTableHandler(tablesService, databasesService),
 		newAddColumnHandler(tablesService, databasesService),
+		newDeleteColumnHandler(tablesService, databasesService),
+		newRestoreColumnHandler(tablesService, databasesService),
 		newAddRowHandler(tablesService, databasesService),
 		newDeleteRowHandler(tablesService, databasesService),
 		newMoveRowHandler(tablesService, databasesService),

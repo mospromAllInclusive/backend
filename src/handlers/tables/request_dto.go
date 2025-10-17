@@ -41,6 +41,11 @@ type addColumnRequestDto struct {
 	Column  column `json:"column" binding:"required"`
 }
 
+type defaultColumnRequestDto struct {
+	TableID  string `json:"table_id" binding:"required"`
+	ColumnID string `json:"column_id" binding:"required"`
+}
+
 type addRowRequestDto struct {
 	SortIndex *int64 `json:"sort_index"`
 }

@@ -9,7 +9,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/AlekSi/pointer"
 	"github.com/google/uuid"
 )
 
@@ -75,6 +77,62 @@ func (s *service) AddColumnToTable(ctx context.Context, column *entities.TableCo
 	_, err = s.executor.Exec(ctx, table.AddColumnExpression(column))
 	if err != nil {
 		return nil, err
+	}
+
+	if err := s.repo.UpdateTable(ctx, table); err != nil {
+		return nil, err
+	}
+
+	return table, nil
+}
+
+func (s *service) DeleteColumn(ctx context.Context, columnID string, tableID string) (*entities.Table, error) {
+	unlock := s.keyMutex.Lock(tableID)
+	defer unlock()
+
+	table, err := s.repo.GetTableByID(ctx, tableID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	found := false
+	for _, col := range table.Columns {
+		if col.ID == columnID {
+			col.DeletedAt = pointer.To(time.Now())
+			found = true
+		}
+	}
+
+	if !found {
+		return nil, ErrorColumnNotFound{}
+	}
+
+	if err := s.repo.UpdateTable(ctx, table); err != nil {
+		return nil, err
+	}
+
+	return table, nil
+}
+
+func (s *service) RestoreColumn(ctx context.Context, columnID string, tableID string) (*entities.Table, error) {
+	unlock := s.keyMutex.Lock(tableID)
+	defer unlock()
+
+	table, err := s.repo.GetTableByID(ctx, tableID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	found := false
+	for _, col := range table.Columns {
+		if col.ID == columnID {
+			col.DeletedAt = nil
+			found = true
+		}
+	}
+
+	if !found {
+		return nil, ErrorColumnNotFound{}
 	}
 
 	if err := s.repo.UpdateTable(ctx, table); err != nil {

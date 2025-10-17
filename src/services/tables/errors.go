@@ -12,3 +12,14 @@ func IsErrTableNotFound(err error) bool {
 	target := ErrorTableNotFound{}
 	return errors.As(err, &target)
 }
+
+type ErrorColumnNotFound struct{}
+
+func (e ErrorColumnNotFound) Error() string {
+	return "Column not found"
+}
+
+func IsErrColumnNotFound(err error) bool {
+	target := ErrorColumnNotFound{}
+	return errors.As(err, &target)
+}
