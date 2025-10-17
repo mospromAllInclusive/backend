@@ -1,0 +1,38 @@
+package services
+
+import (
+	"backend/src/domains/entities"
+	"context"
+
+	"github.com/gin-gonic/gin"
+)
+
+type IUsersService interface {
+	AddUser(ctx context.Context, user *entities.User) (*entities.User, error)
+	FindUserByEmail(ctx context.Context, email string) (*entities.User, error)
+	FindUserByID(ctx context.Context, id int64) (*entities.User, error)
+}
+
+type IAuthService interface {
+	JWTAuthMiddleware() gin.HandlerFunc
+	Login(ctx context.Context, email string, password string) (*entities.User, string, error)
+}
+
+type ITablesService interface {
+	CreateTable(ctx context.Context, table *entities.Table) (*entities.Table, error)
+	AddColumnToTable(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, error)
+	GetTableByID(ctx context.Context, id string) (*entities.Table, error)
+	ListByDatabaseID(ctx context.Context, databaseID int64) ([]*entities.Table, error)
+	AddRow(ctx context.Context, table *entities.Table, sortIndex *int64) (entities.TableRow, error)
+	DeleteRow(ctx context.Context, tableID string, rowID int64) error
+	RestoreRow(ctx context.Context, tableID string, rowID int64) error
+	MoveRow(ctx context.Context, tableID string, rowID int64, sortIndex int64) error
+	SetCellValue(ctx context.Context, tableID string, rowID int64, columnID string, value *string) error
+	ReadTable(ctx context.Context, table *entities.Table) ([]entities.TableRow, error)
+}
+
+type IDatabasesService interface {
+	AddDatabase(ctx context.Context, userID int64, name string) (*entities.Database, error)
+	GetUsersDatabases(ctx context.Context, userID int64) ([]*entities.UsersDatabase, error)
+	CheckUserRole(ctx context.Context, userID, databaseID int64, requiredRole entities.Role) (bool, error)
+}
