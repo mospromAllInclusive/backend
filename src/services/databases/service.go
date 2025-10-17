@@ -64,3 +64,14 @@ func (s *service) CheckUserRole(ctx context.Context, userID, databaseID int64, r
 
 	return role.Authorize(requiredRole), nil
 }
+
+func (s *service) GetUsersDatabaseRole(ctx context.Context, userID, databaseID int64) (entities.Role, error) {
+	role, err := s.repo.GetUsersDatabaseRole(ctx, userID, databaseID)
+	if err != nil {
+		if s.repo.IsErrNoRows(err) {
+			return "", nil
+		}
+		return "", err
+	}
+	return role, nil
+}

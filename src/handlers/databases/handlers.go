@@ -17,5 +17,6 @@ func NewHandlers(
 		newUsersHandler(databasesService),
 		newSetRoleHandler(databasesService, usersService),
 		newDeleteUserHandler(databasesService),
+		newRoleHandler(databasesService),
 	}
 }
