@@ -19,5 +19,7 @@ func NewHandlers(
 		newRestoreRowHandler(tablesService, databasesService),
 		newSetCellValueHandler(tablesService, databasesService),
 		newInfoHandler(tablesService, databasesService),
+		newDeleteTableHandler(tablesService, databasesService),
+		newRestoreTableHandler(tablesService, databasesService),
 	}
 }

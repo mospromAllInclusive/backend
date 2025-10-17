@@ -21,8 +21,10 @@ type IAuthService interface {
 
 type ITablesService interface {
 	CreateTable(ctx context.Context, table *entities.Table) (*entities.Table, error)
+	DeleteTable(ctx context.Context, id string) error
+	RestoreTable(ctx context.Context, id string) error
 	AddColumnToTable(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, error)
-	GetTableByID(ctx context.Context, id string) (*entities.Table, error)
+	GetTableByID(ctx context.Context, id string, withDeleted bool) (*entities.Table, error)
 	ListByDatabaseID(ctx context.Context, databaseID int64) ([]*entities.Table, error)
 	ListByDatabaseIDs(ctx context.Context, databaseIDs []int64) ([]*entities.Table, error)
 	AddRow(ctx context.Context, table *entities.Table, sortIndex *int64) (entities.TableRow, error)

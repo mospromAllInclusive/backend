@@ -38,11 +38,35 @@ func (r *tablesRepository) AddTable(ctx context.Context, table *entities.Table) 
 	return createdDBTable.ToTable(), err
 }
 
-func (r *tablesRepository) GetTableByID(ctx context.Context, id string) (*entities.Table, error) {
+func (r *tablesRepository) DeleteTable(ctx context.Context, id string) error {
+	q := sqrl.Update(tablesTable).
+		Set("deleted_at", time.Now()).
+		Where(sqrl.Eq{"id": id}).
+		PlaceholderFormat(sqrl.Dollar)
+
+	_, err := r.executor.Exec(ctx, q)
+	return err
+}
+
+func (r *tablesRepository) RestoreTable(ctx context.Context, id string) error {
+	q := sqrl.Update(tablesTable).
+		Set("deleted_at", nil).
+		Where(sqrl.Eq{"id": id}).
+		PlaceholderFormat(sqrl.Dollar)
+
+	_, err := r.executor.Exec(ctx, q)
+	return err
+}
+
+func (r *tablesRepository) GetTableByID(ctx context.Context, id string, withDeleted bool) (*entities.Table, error) {
 	q := sqrl.Select("*").
 		From(tablesTable).
 		Where(sqrl.Eq{"id": id}).
 		PlaceholderFormat(sqrl.Dollar)
+
+	if !withDeleted {
+		q = q.Where(sqrl.Eq{"deleted_at": nil})
+	}
 
 	dbTable := &entities.DBTable{}
 	err := r.executor.Run(ctx, dbTable, q)
@@ -68,7 +92,7 @@ func (r *tablesRepository) UpdateTable(ctx context.Context, table *entities.Tabl
 func (r *tablesRepository) ListByDatabaseID(ctx context.Context, databaseID int64) ([]*entities.Table, error) {
 	q := sqrl.Select("*").
 		From(tablesTable).
-		Where(sqrl.Eq{"database_id": databaseID}).
+		Where(sqrl.Eq{"database_id": databaseID, "deleted_at": nil}).
 		PlaceholderFormat(sqrl.Dollar)
 
 	var dbTables []*entities.DBTable
@@ -86,7 +110,7 @@ func (r *tablesRepository) ListByDatabaseID(ctx context.Context, databaseID int6
 func (r *tablesRepository) ListByDatabaseIDs(ctx context.Context, databaseIDs []int64) ([]*entities.Table, error) {
 	q := sqrl.Select("*").
 		From(tablesTable).
-		Where(sqrl.Eq{"database_id": databaseIDs}).
+		Where(sqrl.Eq{"database_id": databaseIDs, "deleted_at": nil}).
 		PlaceholderFormat(sqrl.Dollar)
 
 	var dbTables []*entities.DBTable

@@ -32,6 +32,10 @@ func (c *column) toEntity() *entities.TableColumn {
 	}
 }
 
+type requestByTableID struct {
+	TableID string `json:"table_id" binding:"required"`
+}
+
 type addColumnRequestDto struct {
 	TableID string `json:"table_id" binding:"required"`
 	Column  column `json:"column" binding:"required"`

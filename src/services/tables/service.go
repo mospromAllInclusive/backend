@@ -52,11 +52,19 @@ func (s *service) CreateTable(ctx context.Context, table *entities.Table) (*enti
 	return s.repo.AddTable(ctx, table)
 }
 
+func (s *service) DeleteTable(ctx context.Context, tableID string) error {
+	return s.repo.DeleteTable(ctx, tableID)
+}
+
+func (s *service) RestoreTable(ctx context.Context, tableID string) error {
+	return s.repo.RestoreTable(ctx, tableID)
+}
+
 func (s *service) AddColumnToTable(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, error) {
 	unlock := s.keyMutex.Lock(tableID)
 	defer unlock()
 
-	table, err := s.repo.GetTableByID(ctx, tableID)
+	table, err := s.repo.GetTableByID(ctx, tableID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -76,8 +84,12 @@ func (s *service) AddColumnToTable(ctx context.Context, column *entities.TableCo
 	return table, nil
 }
 
-func (s *service) GetTableByID(ctx context.Context, id string) (*entities.Table, error) {
-	return s.repo.GetTableByID(ctx, id)
+func (s *service) GetTableByID(ctx context.Context, id string, withDeleted bool) (*entities.Table, error) {
+	table, err := s.repo.GetTableByID(ctx, id, withDeleted)
+	if err != nil && s.repo.IsErrNoRows(err) {
+		return nil, ErrorTableNotFound{}
+	}
+	return table, err
 }
 
 func (s *service) ListByDatabaseID(ctx context.Context, databaseID int64) ([]*entities.Table, error) {

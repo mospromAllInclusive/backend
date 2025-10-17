@@ -4,6 +4,7 @@ import (
 	"backend/src/domains/entities"
 	"backend/src/handlers"
 	"backend/src/services"
+	"backend/src/services/tables"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -37,13 +38,13 @@ func (h *addRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	table, err := h.tablesService.GetTableByID(c, tableID)
+	table, err := h.tablesService.GetTableByID(c, tableID, false)
 	if err != nil {
+		if tables.IsErrTableNotFound(err) {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "table not found"})
+			return
+		}
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	if table == nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "table not found"})
 		return
 	}
 
