@@ -47,7 +47,8 @@ type defaultColumnRequestDto struct {
 }
 
 type addRowRequestDto struct {
-	SortIndex *int64 `json:"sort_index"`
+	SortIndex *int64             `json:"sort_index"`
+	Data      map[string]*string `json:"data"`
 }
 
 type defaultRowRequestDto struct {

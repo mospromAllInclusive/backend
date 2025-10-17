@@ -125,12 +125,17 @@ func (r *tablesRepository) ListByDatabaseIDs(ctx context.Context, databaseIDs []
 	return tables, err
 }
 
-func (r *tablesRepository) AddRow(ctx context.Context, table *entities.Table, sortIndex *int64) (entities.TableRow, error) {
+func (r *tablesRepository) AddRow(ctx context.Context, table *entities.Table, data map[string]*string, sortIndex *int64) (entities.TableRow, error) {
 	cols := []string{"sort_index_version"}
 	values := []interface{}{time.Now().UnixNano()}
 	if sortIndex != nil {
 		cols = append(cols, "sort_index")
 		values = append(values, *sortIndex)
+	}
+
+	for colID, value := range data {
+		cols = append(cols, colID)
+		values = append(values, value)
 	}
 
 	q := sqrl.Insert(fmt.Sprintf("%s.%s", entities.UsersTablespace, table.ID)).

@@ -58,7 +58,22 @@ func (h *addRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	row, err := h.tablesService.AddRow(c, table, req.SortIndex)
+	existentColumns := make(map[string]struct{}, len(table.Columns))
+	for _, col := range table.Columns {
+		if col.DeletedAt != nil {
+			continue
+		}
+		existentColumns[col.ID] = struct{}{}
+	}
+
+	for colID := range req.Data {
+		if _, ok := existentColumns[colID]; !ok {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "column " + colID + " does not exist"})
+			return
+		}
+	}
+
+	row, err := h.tablesService.AddRow(c, table, req.Data, req.SortIndex)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

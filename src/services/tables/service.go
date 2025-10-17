@@ -158,8 +158,8 @@ func (s *service) ListByDatabaseIDs(ctx context.Context, databaseIDs []int64) ([
 	return s.repo.ListByDatabaseIDs(ctx, databaseIDs)
 }
 
-func (s *service) AddRow(ctx context.Context, table *entities.Table, sortIndex *int64) (entities.TableRow, error) {
-	return s.repo.AddRow(ctx, table, sortIndex)
+func (s *service) AddRow(ctx context.Context, table *entities.Table, data map[string]*string, sortIndex *int64) (entities.TableRow, error) {
+	return s.repo.AddRow(ctx, table, data, sortIndex)
 }
 
 func (s *service) DeleteRow(ctx context.Context, tableID string, rowID int64) error {
