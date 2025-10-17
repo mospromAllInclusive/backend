@@ -11,7 +11,7 @@ func NewHandlers(
 ) []handlers.IHandler {
 	return []handlers.IHandler{
 		newCreateDatabaseHandler(databasesService),
-		newListDatabasesHandler(databasesService),
+		newListDatabasesHandler(databasesService, tablesService),
 		newGetDatabaseTablesHandler(tablesService, databasesService),
 	}
 }

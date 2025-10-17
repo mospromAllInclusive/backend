@@ -84,6 +84,10 @@ func (s *service) ListByDatabaseID(ctx context.Context, databaseID int64) ([]*en
 	return s.repo.ListByDatabaseID(ctx, databaseID)
 }
 
+func (s *service) ListByDatabaseIDs(ctx context.Context, databaseIDs []int64) ([]*entities.Table, error) {
+	return s.repo.ListByDatabaseIDs(ctx, databaseIDs)
+}
+
 func (s *service) AddRow(ctx context.Context, table *entities.Table, sortIndex *int64) (entities.TableRow, error) {
 	return s.repo.AddRow(ctx, table, sortIndex)
 }

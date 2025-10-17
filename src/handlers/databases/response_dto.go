@@ -2,15 +2,17 @@ package databases
 
 import (
 	"backend/src/domains/entities"
+	"backend/src/handlers/common"
 	"sort"
 	"time"
 )
 
 type databaseResponse struct {
-	ID        int64         `json:"id"`
-	Name      string        `json:"name"`
-	Role      entities.Role `json:"role,omitempty"`
-	CreatedAt time.Time     `json:"created_at"`
+	ID        int64                 `json:"id"`
+	Name      string                `json:"name"`
+	Role      entities.Role         `json:"role,omitempty"`
+	CreatedAt time.Time             `json:"created_at"`
+	Tables    common.TablesResponse `json:"tables"`
 }
 
 func newDatabaseResponse(database *entities.Database) *databaseResponse {
@@ -23,7 +25,11 @@ func newDatabaseResponse(database *entities.Database) *databaseResponse {
 
 type databaseListResponse []*databaseResponse
 
-func newDatabaseListResponse(databases []*entities.UsersDatabase) databaseListResponse {
+func newDatabaseListResponse(databases []*entities.UsersDatabase, tables []*entities.Table) databaseListResponse {
+	tablesByDb := make(map[int64][]*entities.Table, len(databases))
+	for _, table := range tables {
+		tablesByDb[table.DatabaseID] = append(tablesByDb[table.DatabaseID], table)
+	}
 	res := make(databaseListResponse, 0, len(databases))
 	for _, database := range databases {
 		res = append(res, &databaseResponse{
@@ -31,6 +37,7 @@ func newDatabaseListResponse(databases []*entities.UsersDatabase) databaseListRe
 			Name:      database.Name,
 			Role:      database.Role,
 			CreatedAt: database.CreatedAt,
+			Tables:    common.NewTablesResponse(tablesByDb[database.DatabaseID]),
 		})
 	}
 

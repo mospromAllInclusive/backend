@@ -23,6 +23,7 @@ type ITablesService interface {
 	AddColumnToTable(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, error)
 	GetTableByID(ctx context.Context, id string) (*entities.Table, error)
 	ListByDatabaseID(ctx context.Context, databaseID int64) ([]*entities.Table, error)
+	ListByDatabaseIDs(ctx context.Context, databaseIDs []int64) ([]*entities.Table, error)
 	AddRow(ctx context.Context, table *entities.Table, sortIndex *int64) (entities.TableRow, error)
 	DeleteRow(ctx context.Context, tableID string, rowID int64) error
 	RestoreRow(ctx context.Context, tableID string, rowID int64) error

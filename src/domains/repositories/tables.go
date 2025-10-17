@@ -83,6 +83,24 @@ func (r *tablesRepository) ListByDatabaseID(ctx context.Context, databaseID int6
 	return tables, err
 }
 
+func (r *tablesRepository) ListByDatabaseIDs(ctx context.Context, databaseIDs []int64) ([]*entities.Table, error) {
+	q := sqrl.Select("*").
+		From(tablesTable).
+		Where(sqrl.Eq{"database_id": databaseIDs}).
+		PlaceholderFormat(sqrl.Dollar)
+
+	var dbTables []*entities.DBTable
+	err := r.executor.Run(ctx, &dbTables, q)
+	if err != nil {
+		return nil, err
+	}
+	tables := make([]*entities.Table, len(dbTables))
+	for i, dbTable := range dbTables {
+		tables[i] = dbTable.ToTable()
+	}
+	return tables, err
+}
+
 func (r *tablesRepository) AddRow(ctx context.Context, table *entities.Table, sortIndex *int64) (entities.TableRow, error) {
 	cols := []string{"sort_index_version"}
 	values := []interface{}{time.Now().UnixNano()}
