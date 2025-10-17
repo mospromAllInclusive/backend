@@ -82,6 +82,22 @@ func (r *databasesRepository) GetUsersDatabases(ctx context.Context, userID int6
 	return usersDatabases, err
 }
 
+func (r *databasesRepository) GetDatabasesUsers(ctx context.Context, databaseID int64) ([]*entities.DatabasesUser, error) {
+	q := sqrl.Select("u.*, udb.role").
+		From(usersDatabasesTableWithShortName).
+		Join(usersTableWithShortName + " on udb.user_id = u.id").
+		Where(sqrl.And{
+			sqrl.Eq{"udb.database_id": databaseID},
+			sqrl.Eq{"udb.deleted_at": nil},
+			sqrl.Eq{"u.deleted_at": nil},
+		}).
+		PlaceholderFormat(sqrl.Dollar)
+
+	var databasesUsers []*entities.DatabasesUser
+	err := r.executor.Run(ctx, &databasesUsers, q)
+	return databasesUsers, err
+}
+
 func (r *databasesRepository) GetUsersDatabaseRole(ctx context.Context, userID, databaseID int64) (entities.Role, error) {
 	q := sqrl.Select("role").
 		From(usersDatabasesTable).

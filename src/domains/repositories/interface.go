@@ -7,6 +7,7 @@ import (
 
 const (
 	usersTable                       = "app.users"
+	usersTableWithShortName          = "app.users as u"
 	tablesTable                      = "app.tables"
 	tablesTableWithShortName         = "app.tables as t"
 	databasesTable                   = "app.databases"
@@ -48,5 +49,6 @@ type IDatabasesRepository interface {
 	UpsertUsersDatabase(ctx context.Context, usersDatabase *entities.UsersDatabase) (*entities.UsersDatabase, error)
 	GetDatabaseByID(ctx context.Context, id int64) (*entities.Database, error)
 	GetUsersDatabases(ctx context.Context, userID int64) ([]*entities.UsersDatabase, error)
+	GetDatabasesUsers(ctx context.Context, databaseID int64) ([]*entities.DatabasesUser, error)
 	GetUsersDatabaseRole(ctx context.Context, userID, databaseID int64) (entities.Role, error)
 }

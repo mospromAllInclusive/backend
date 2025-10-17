@@ -47,3 +47,25 @@ func newDatabaseListResponse(databases []*entities.UsersDatabase, tables []*enti
 
 	return res
 }
+
+type databasesUserResponse struct {
+	*common.UserInfoResponse
+	Role entities.Role `json:"role"`
+}
+
+func newDatabasesUserResponse(user *entities.DatabasesUser) *databasesUserResponse {
+	return &databasesUserResponse{
+		UserInfoResponse: common.NewUserInfoResponse(user.User),
+		Role:             user.Role,
+	}
+}
+
+type databaseUsersListResponse []*databasesUserResponse
+
+func newDatabaseUsersListResponse(users []*entities.DatabasesUser) databaseUsersListResponse {
+	res := make(databaseUsersListResponse, 0, len(users))
+	for _, user := range users {
+		res = append(res, newDatabasesUserResponse(user))
+	}
+	return res
+}

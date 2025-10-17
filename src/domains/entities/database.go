@@ -19,6 +19,11 @@ type UsersDatabase struct {
 	Name string `db:"name"`
 }
 
+type DatabasesUser struct {
+	*User
+	Role Role `db:"role"`
+}
+
 type Role string
 
 const (

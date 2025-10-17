@@ -41,6 +41,10 @@ func (s *service) GetUsersDatabases(ctx context.Context, userID int64) ([]*entit
 	return s.repo.GetUsersDatabases(ctx, userID)
 }
 
+func (s *service) GetDatabasesUsers(ctx context.Context, databaseID int64) ([]*entities.DatabasesUser, error) {
+	return s.repo.GetDatabasesUsers(ctx, databaseID)
+}
+
 func (s *service) CheckUserRole(ctx context.Context, userID, databaseID int64, requiredRole entities.Role) (bool, error) {
 	role, err := s.repo.GetUsersDatabaseRole(ctx, userID, databaseID)
 	if err != nil {

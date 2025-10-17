@@ -2,6 +2,7 @@ package users
 
 import (
 	"backend/src/handlers"
+	"backend/src/handlers/common"
 	"backend/src/services"
 	"backend/src/services/users"
 	"net/http"
@@ -32,7 +33,7 @@ func (h *infoHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, newUserInfoResponse(user))
+	c.JSON(http.StatusOK, common.NewUserInfoResponse(user))
 }
 
 func (h *infoHandler) Path() string {

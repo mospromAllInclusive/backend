@@ -13,5 +13,6 @@ func NewHandlers(
 		newCreateDatabaseHandler(databasesService),
 		newListDatabasesHandler(databasesService, tablesService),
 		newGetDatabaseTablesHandler(tablesService, databasesService),
+		newUsersHandler(databasesService),
 	}
 }
