@@ -9,22 +9,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type deleteRowHandler struct {
+type restoreRowHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
 }
 
-func newDeleteRowHandler(
+func newRestoreRowHandler(
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
-	return &deleteRowHandler{
+	return &restoreRowHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
 	}
 }
 
-func (h *deleteRowHandler) Handle(c *gin.Context) {
+func (h *restoreRowHandler) Handle(c *gin.Context) {
 	req := defaultRowRequestDto{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body: " + err.Error()})
@@ -66,14 +66,14 @@ func (h *deleteRowHandler) Handle(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func (h *deleteRowHandler) Path() string {
+func (h *restoreRowHandler) Path() string {
 	return "/tables/:id/restore-row"
 }
 
-func (h *deleteRowHandler) Method() string {
+func (h *restoreRowHandler) Method() string {
 	return http.MethodPost
 }
 
-func (h *deleteRowHandler) AuthRequired() bool {
+func (h *restoreRowHandler) AuthRequired() bool {
 	return true
 }

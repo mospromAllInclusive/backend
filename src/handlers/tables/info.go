@@ -3,34 +3,29 @@ package tables
 import (
 	"backend/src/domains/entities"
 	"backend/src/handlers"
+	"backend/src/handlers/common"
 	"backend/src/services"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-type deleteRowHandler struct {
+type infoHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
 }
 
-func newDeleteRowHandler(
+func newInfoHandler(
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
-	return &deleteRowHandler{
+	return &infoHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
 	}
 }
 
-func (h *deleteRowHandler) Handle(c *gin.Context) {
-	req := defaultRowRequestDto{}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body: " + err.Error()})
-		return
-	}
-
+func (h *infoHandler) Handle(c *gin.Context) {
 	tableID := c.Param("id")
 	if tableID == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid table id"})
@@ -47,7 +42,7 @@ func (h *deleteRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	authorized, err := h.databasesService.CheckUserRole(c, c.MustGet("user_id").(int64), table.DatabaseID, entities.RoleWriter)
+	authorized, err := h.databasesService.CheckUserRole(c, c.MustGet("user_id").(int64), table.DatabaseID, entities.RoleReader)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -57,23 +52,17 @@ func (h *deleteRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	err = h.tablesService.DeleteRow(c, table.ID, req.RowID)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.Status(http.StatusOK)
+	c.JSON(http.StatusOK, common.NewTableResponse(table))
 }
 
-func (h *deleteRowHandler) Path() string {
-	return "/tables/:id/delete-row"
+func (h *infoHandler) Path() string {
+	return "/tables/:id/info"
 }
 
-func (h *deleteRowHandler) Method() string {
-	return http.MethodPost
+func (h *infoHandler) Method() string {
+	return http.MethodGet
 }
 
-func (h *deleteRowHandler) AuthRequired() bool {
+func (h *infoHandler) AuthRequired() bool {
 	return true
 }
