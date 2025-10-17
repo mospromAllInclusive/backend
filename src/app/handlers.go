@@ -56,7 +56,7 @@ func (a *App) initHandlers() []handlers.IHandler {
 
 	res = append(res, tables.NewHandlers(a.Services.TablesService, a.Services.DatabasesService)...)
 	res = append(res, databases.NewHandlers(a.Services.TablesService, a.Services.DatabasesService)...)
-	res = append(res, users.NewHandlers(a.Services.AuthService)...)
+	res = append(res, users.NewHandlers(a.Services.AuthService, a.Services.UsersService)...)
 
 	return res
 }

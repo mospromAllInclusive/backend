@@ -12,7 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-const tokenExpirationTime = 7 * 24 * time.Hour
+const tokenExpirationTime = 100 * 24 * time.Hour
 
 type service struct {
 	jwtKey       []byte
