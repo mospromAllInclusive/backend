@@ -14,18 +14,18 @@ import (
 type restoreRowHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
-	hub              *web_sockets.Hub
+	tablesHub        *web_sockets.Hub
 }
 
 func newRestoreRowHandler(
-	hub *web_sockets.Hub,
+	tablesHub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
 	return &restoreRowHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
-		hub:              hub,
+		tablesHub:        tablesHub,
 	}
 }
 
@@ -70,7 +70,7 @@ func (h *restoreRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	h.hub.Broadcast(tableID, entities.EventActionFetchTable, nil)
+	h.tablesHub.Broadcast(tableID, entities.EventActionFetchTable, nil)
 	c.Status(http.StatusOK)
 }
 

@@ -3,6 +3,8 @@ package databases
 import (
 	"backend/src/domains/entities"
 	"backend/src/handlers"
+	"backend/src/handlers/common"
+	"backend/src/modules/web_sockets"
 	"backend/src/services"
 	"net/http"
 	"strconv"
@@ -12,13 +14,19 @@ import (
 
 type deleteUserHandler struct {
 	databasesService services.IDatabasesService
+	tablesService    services.ITablesService
+	usersHub         *web_sockets.Hub
 }
 
 func newDeleteUserHandler(
+	usersHub *web_sockets.Hub,
 	databasesService services.IDatabasesService,
+	tablesService services.ITablesService,
 ) handlers.IHandler {
 	return &deleteUserHandler{
 		databasesService: databasesService,
+		tablesService:    tablesService,
+		usersHub:         usersHub,
 	}
 }
 
@@ -51,6 +59,9 @@ func (h *deleteUserHandler) Handle(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	_ = common.ThrowUserFromDBTables(c, h.tablesService, h.usersHub, req.UserID, dbIDInt)
+	h.usersHub.Broadcast(strconv.FormatInt(req.UserID, 10), entities.EventActionFetchDatabases, nil)
 
 	c.Status(http.StatusOK)
 }

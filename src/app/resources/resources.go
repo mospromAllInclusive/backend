@@ -11,7 +11,8 @@ type Resources struct {
 	Ctx              context.Context
 	Cancel           context.CancelFunc
 	PostgresExecutor sql_executor.ISQLExecutor
-	WSHub            *web_sockets.Hub
+	TablesWSHub      *web_sockets.Hub
+	UsersWSHub       *web_sockets.Hub
 }
 
 func NewResources() *Resources {
@@ -24,7 +25,8 @@ func NewResources() *Resources {
 		os.Getenv("POSTGRES_URL"),
 	)
 
-	r.WSHub = web_sockets.NewHub(r.Ctx)
+	r.TablesWSHub = web_sockets.NewHub(r.Ctx)
+	r.UsersWSHub = web_sockets.NewHub(r.Ctx)
 
 	return r
 }

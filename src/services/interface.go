@@ -33,6 +33,7 @@ type ITablesService interface {
 	RestoreColumn(ctx context.Context, columnID string, tableID string) (*entities.Table, error)
 	GetTableByID(ctx context.Context, id string, withDeleted bool) (*entities.Table, error)
 	ListByDatabaseID(ctx context.Context, databaseID int64) ([]*entities.Table, error)
+	ListIDsByDatabaseID(ctx context.Context, databaseID int64) ([]string, error)
 	ListByDatabaseIDs(ctx context.Context, databaseIDs []int64) ([]*entities.Table, error)
 	AddRow(ctx context.Context, userID int64, table *entities.Table, data map[string]*string, sortIndex *int64) (entities.TableRow, error)
 	DeleteRow(ctx context.Context, tableID string, rowID int64) (entities.TableRow, error)
@@ -53,6 +54,7 @@ type IDatabasesService interface {
 	DeleteUsersDatabaseRelation(ctx context.Context, userID, databaseID int64) error
 	GetUsersDatabases(ctx context.Context, userID int64) ([]*entities.UsersDatabase, error)
 	GetDatabasesUsers(ctx context.Context, databaseID int64) ([]*entities.DatabasesUser, error)
+	GetDatabasesUsersIDs(ctx context.Context, databaseID int64) ([]int64, error)
 	CheckUserRole(ctx context.Context, userID, databaseID int64, requiredRole entities.Role) (bool, error)
 	GetUsersDatabaseRole(ctx context.Context, userID, databaseID int64) (entities.Role, error)
 }

@@ -15,18 +15,18 @@ import (
 type restoreColumnHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
-	hub              *web_sockets.Hub
+	tablesHub        *web_sockets.Hub
 }
 
 func newRestoreColumnHandler(
-	hub *web_sockets.Hub,
+	tablesHub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
 	return &restoreColumnHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
-		hub:              hub,
+		tablesHub:        tablesHub,
 	}
 }
 
@@ -65,7 +65,7 @@ func (h *restoreColumnHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	h.hub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
+	h.tablesHub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
 	c.JSON(http.StatusOK, common.NewTableResponse(table))
 }
 

@@ -14,18 +14,18 @@ import (
 type setCellValueHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
-	hub              *web_sockets.Hub
+	tablesHub        *web_sockets.Hub
 }
 
 func newSetCellValueHandler(
-	hub *web_sockets.Hub,
+	tablesHub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
 	return &setCellValueHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
-		hub:              hub,
+		tablesHub:        tablesHub,
 	}
 }
 
@@ -91,7 +91,7 @@ func (h *setCellValueHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	h.hub.Broadcast(tableID, entities.EventActionSetCellValue, entities.SetCellValueMessage{
+	h.tablesHub.Broadcast(tableID, entities.EventActionSetCellValue, entities.SetCellValueMessage{
 		RowID:    req.RowID,
 		ColumnID: req.ColumnID,
 		Value:    req.Value,

@@ -1,21 +1,27 @@
 package databases
 
 import (
+	"backend/src/domains/entities"
 	"backend/src/handlers"
+	"backend/src/modules/web_sockets"
 	"backend/src/services"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 type createDatabaseHandler struct {
+	usersHub         *web_sockets.Hub
 	databasesService services.IDatabasesService
 }
 
 func newCreateDatabaseHandler(
+	usersHub *web_sockets.Hub,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
 	return &createDatabaseHandler{
+		usersHub:         usersHub,
 		databasesService: databasesService,
 	}
 }
@@ -27,11 +33,14 @@ func (h *createDatabaseHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	database, err := h.databasesService.AddDatabase(c, c.MustGet("user_id").(int64), req.Name)
+	userID := c.MustGet("user_id").(int64)
+	database, err := h.databasesService.AddDatabase(c, userID, req.Name)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	h.usersHub.Broadcast(strconv.FormatInt(userID, 10), entities.EventActionFetchDatabases, nil)
 
 	c.JSON(http.StatusOK, newDatabaseResponse(database))
 }

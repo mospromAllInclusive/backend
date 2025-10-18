@@ -107,6 +107,17 @@ func (r *tablesRepository) ListByDatabaseID(ctx context.Context, databaseID int6
 	return tables, err
 }
 
+func (r *tablesRepository) ListIDsByDatabaseID(ctx context.Context, databaseID int64) ([]string, error) {
+	q := sqrl.Select("id").
+		From(tablesTable).
+		Where(sqrl.Eq{"database_id": databaseID, "deleted_at": nil}).
+		PlaceholderFormat(sqrl.Dollar)
+
+	var ids []string
+	err := r.executor.Run(ctx, &ids, q)
+	return ids, err
+}
+
 func (r *tablesRepository) ListByDatabaseIDs(ctx context.Context, databaseIDs []int64) ([]*entities.Table, error) {
 	q := sqrl.Select("*").
 		From(tablesTable).

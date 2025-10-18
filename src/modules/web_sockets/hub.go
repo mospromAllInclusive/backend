@@ -121,4 +121,10 @@ func (h *Hub) Broadcast(topic, eventAction string, payload interface{}) {
 	}
 }
 
+func (h *Hub) BroadcastMany(topics []string, eventAction string, payload interface{}) {
+	for _, topic := range topics {
+		h.Broadcast(topic, eventAction, payload)
+	}
+}
+
 func (h *Hub) Shutdown() { h.cancel() }

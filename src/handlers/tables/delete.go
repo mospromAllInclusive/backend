@@ -3,6 +3,7 @@ package tables
 import (
 	"backend/src/domains/entities"
 	"backend/src/handlers"
+	"backend/src/handlers/common"
 	"backend/src/modules/web_sockets"
 	"backend/src/services"
 	"backend/src/services/tables"
@@ -14,18 +15,21 @@ import (
 type deleteTableHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
-	hub              *web_sockets.Hub
+	tablesHub        *web_sockets.Hub
+	usersHub         *web_sockets.Hub
 }
 
 func newDeleteTableHandler(
-	hub *web_sockets.Hub,
+	tablesHub *web_sockets.Hub,
+	usersHub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
 	return &deleteTableHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
-		hub:              hub,
+		tablesHub:        tablesHub,
+		usersHub:         usersHub,
 	}
 }
 
@@ -64,7 +68,9 @@ func (h *deleteTableHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	h.hub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
+	h.tablesHub.Broadcast(req.TableID, entities.EventActionGoAwayFromTable, nil)
+	_ = common.SendActionToDBUsers(c, h.databasesService, h.usersHub, table.DatabaseID, entities.EventActionFetchDatabases)
+
 	c.Status(http.StatusOK)
 }
 

@@ -233,6 +233,10 @@ func (s *service) ListByDatabaseID(ctx context.Context, databaseID int64) ([]*en
 	return s.repo.ListByDatabaseID(ctx, databaseID)
 }
 
+func (s *service) ListIDsByDatabaseID(ctx context.Context, databaseID int64) ([]string, error) {
+	return s.repo.ListIDsByDatabaseID(ctx, databaseID)
+}
+
 func (s *service) ListByDatabaseIDs(ctx context.Context, databaseIDs []int64) ([]*entities.Table, error) {
 	return s.repo.ListByDatabaseIDs(ctx, databaseIDs)
 }

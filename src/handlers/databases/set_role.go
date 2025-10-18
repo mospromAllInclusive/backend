@@ -3,6 +3,7 @@ package databases
 import (
 	"backend/src/domains/entities"
 	"backend/src/handlers"
+	"backend/src/modules/web_sockets"
 	"backend/src/services"
 	"backend/src/services/users"
 	"net/http"
@@ -12,15 +13,18 @@ import (
 )
 
 type setRoleHandler struct {
+	usersHub         *web_sockets.Hub
 	databasesService services.IDatabasesService
 	usersService     services.IUsersService
 }
 
 func newSetRoleHandler(
+	usersHub *web_sockets.Hub,
 	databasesService services.IDatabasesService,
 	usersService services.IUsersService,
 ) handlers.IHandler {
 	return &setRoleHandler{
+		usersHub:         usersHub,
 		databasesService: databasesService,
 		usersService:     usersService,
 	}
@@ -69,6 +73,8 @@ func (h *setRoleHandler) Handle(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	h.usersHub.Broadcast(strconv.FormatInt(req.UserID, 10), entities.EventActionFetchDatabases, nil)
 
 	c.Status(http.StatusOK)
 }

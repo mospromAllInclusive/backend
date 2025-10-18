@@ -43,7 +43,8 @@ func (a *App) initWebServer() {
 		r.Handle(handler.Method(), handler.Path(), h...)
 	}
 
-	r.GET("/ws", web_sockets.ServeWS(a.Resources.WSHub))
+	r.GET("/ws/tables", web_sockets.ServeWS(a.Resources.TablesWSHub))
+	r.GET("/ws/users", web_sockets.ServeWS(a.Resources.UsersWSHub))
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -58,8 +59,20 @@ func (a *App) initWebServer() {
 func (a *App) initHandlers() []handlers.IHandler {
 	res := make([]handlers.IHandler, 0)
 
-	res = append(res, tables.NewHandlers(a.Services.TablesService, a.Services.DatabasesService, a.Services.FileService, a.Services.ChangelogService, a.Resources.WSHub)...)
-	res = append(res, databases.NewHandlers(a.Services.TablesService, a.Services.DatabasesService, a.Services.UsersService)...)
+	res = append(res, tables.NewHandlers(
+		a.Services.TablesService,
+		a.Services.DatabasesService,
+		a.Services.FileService,
+		a.Services.ChangelogService,
+		a.Resources.TablesWSHub,
+		a.Resources.UsersWSHub,
+	)...)
+	res = append(res, databases.NewHandlers(
+		a.Services.TablesService,
+		a.Services.DatabasesService,
+		a.Services.UsersService,
+		a.Resources.UsersWSHub,
+	)...)
 	res = append(res, users.NewHandlers(a.Services.AuthService, a.Services.UsersService)...)
 	res = append(res, changelog.NewHandlers(a.Services.ChangelogService, a.Services.TablesService, a.Services.DatabasesService)...)
 

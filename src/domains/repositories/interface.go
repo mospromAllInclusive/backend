@@ -38,6 +38,7 @@ type ITablesRepository interface {
 	GetTableByID(ctx context.Context, id string, withDeleted bool) (*entities.Table, error)
 	UpdateTable(ctx context.Context, table *entities.Table) error
 	ListByDatabaseID(ctx context.Context, databaseID int64) ([]*entities.Table, error)
+	ListIDsByDatabaseID(ctx context.Context, databaseID int64) ([]string, error)
 	ListByDatabaseIDs(ctx context.Context, databaseIDs []int64) ([]*entities.Table, error)
 	AddRow(ctx context.Context, table *entities.Table, data map[string]*string, sortIndex *int64) (entities.TableRow, error)
 	DeleteRow(ctx context.Context, tableID string, rowID int64) (entities.TableRow, error)
@@ -59,6 +60,7 @@ type IDatabasesRepository interface {
 	GetDatabaseByID(ctx context.Context, id int64) (*entities.Database, error)
 	GetUsersDatabases(ctx context.Context, userID int64) ([]*entities.UsersDatabase, error)
 	GetDatabasesUsers(ctx context.Context, databaseID int64) ([]*entities.DatabasesUser, error)
+	GetDatabasesUsersIDs(ctx context.Context, databaseID int64) ([]int64, error)
 	GetUsersDatabaseRole(ctx context.Context, userID, databaseID int64) (entities.Role, error)
 }
 

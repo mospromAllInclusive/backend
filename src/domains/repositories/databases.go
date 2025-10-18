@@ -109,6 +109,20 @@ func (r *databasesRepository) GetDatabasesUsers(ctx context.Context, databaseID 
 	return databasesUsers, err
 }
 
+func (r *databasesRepository) GetDatabasesUsersIDs(ctx context.Context, databaseID int64) ([]int64, error) {
+	q := sqrl.Select("user_id").
+		From(usersDatabasesTable).
+		Where(sqrl.And{
+			sqrl.Eq{"database_id": databaseID},
+			sqrl.Eq{"deleted_at": nil},
+		}).
+		PlaceholderFormat(sqrl.Dollar)
+
+	var ids []int64
+	err := r.executor.Run(ctx, &ids, q)
+	return ids, err
+}
+
 func (r *databasesRepository) GetUsersDatabaseRole(ctx context.Context, userID, databaseID int64) (entities.Role, error) {
 	q := sqrl.Select("role").
 		From(usersDatabasesTable).

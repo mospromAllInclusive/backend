@@ -14,18 +14,18 @@ import (
 type moveRowHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
-	hub              *web_sockets.Hub
+	tablesHub        *web_sockets.Hub
 }
 
 func newMoveRowHandler(
-	hub *web_sockets.Hub,
+	tablesHub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
 	return &moveRowHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
-		hub:              hub,
+		tablesHub:        tablesHub,
 	}
 }
 
@@ -70,7 +70,7 @@ func (h *moveRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	h.hub.Broadcast(tableID, entities.EventActionFetchTable, nil)
+	h.tablesHub.Broadcast(tableID, entities.EventActionFetchTable, nil)
 	c.Status(http.StatusOK)
 }
 

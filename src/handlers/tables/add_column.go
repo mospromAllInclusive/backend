@@ -13,14 +13,14 @@ import (
 )
 
 type addColumnHandler struct {
-	hub              *web_sockets.Hub
+	tablesHub        *web_sockets.Hub
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
 	changelogService services.IChangelogService
 }
 
 func newAddColumnHandler(
-	hub *web_sockets.Hub,
+	tablesHub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 	changelogService services.IChangelogService,
@@ -29,7 +29,7 @@ func newAddColumnHandler(
 		tablesService:    tablesService,
 		databasesService: databasesService,
 		changelogService: changelogService,
-		hub:              hub,
+		tablesHub:        tablesHub,
 	}
 }
 
@@ -74,7 +74,7 @@ func (h *addColumnHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	h.hub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
+	h.tablesHub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
 
 	addedCol := table.Columns[len(table.Columns)-1]
 	columnChange := &entities.ColumnChange{

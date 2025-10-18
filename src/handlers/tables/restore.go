@@ -3,6 +3,7 @@ package tables
 import (
 	"backend/src/domains/entities"
 	"backend/src/handlers"
+	"backend/src/handlers/common"
 	"backend/src/modules/web_sockets"
 	"backend/src/services"
 	"backend/src/services/tables"
@@ -14,18 +15,18 @@ import (
 type restoreTableHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
-	hub              *web_sockets.Hub
+	usersHub         *web_sockets.Hub
 }
 
 func newRestoreTableHandler(
-	hub *web_sockets.Hub,
+	usersHub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
 	return &restoreTableHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
-		hub:              hub,
+		usersHub:         usersHub,
 	}
 }
 
@@ -64,7 +65,8 @@ func (h *restoreTableHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	h.hub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
+	_ = common.SendActionToDBUsers(c, h.databasesService, h.usersHub, table.DatabaseID, entities.EventActionFetchDatabases)
+
 	c.Status(http.StatusOK)
 }
 

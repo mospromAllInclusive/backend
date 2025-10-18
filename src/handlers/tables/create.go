@@ -12,18 +12,18 @@ import (
 )
 
 type createTableHandler struct {
-	hub              *web_sockets.Hub
+	usersHub         *web_sockets.Hub
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
 }
 
 func newCreateTableHandler(
-	hub *web_sockets.Hub,
+	usersHub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
 	return &createTableHandler{
-		hub:              hub,
+		usersHub:         usersHub,
 		tablesService:    tablesService,
 		databasesService: databasesService,
 	}
@@ -56,6 +56,8 @@ func (h *createTableHandler) Handle(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	_ = common.SendActionToDBUsers(c, h.databasesService, h.usersHub, table.DatabaseID, entities.EventActionFetchDatabases)
 
 	c.JSON(http.StatusOK, common.NewTableResponse(table))
 }

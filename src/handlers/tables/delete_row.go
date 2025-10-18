@@ -15,11 +15,11 @@ type deleteRowHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
 	changelogService services.IChangelogService
-	hub              *web_sockets.Hub
+	tablesHub        *web_sockets.Hub
 }
 
 func newDeleteRowHandler(
-	hub *web_sockets.Hub,
+	tablesHub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 	changelogService services.IChangelogService,
@@ -28,7 +28,7 @@ func newDeleteRowHandler(
 		tablesService:    tablesService,
 		databasesService: databasesService,
 		changelogService: changelogService,
-		hub:              hub,
+		tablesHub:        tablesHub,
 	}
 }
 
@@ -79,7 +79,7 @@ func (h *deleteRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	h.hub.Broadcast(tableID, entities.EventActionFetchTable, nil)
+	h.tablesHub.Broadcast(tableID, entities.EventActionFetchTable, nil)
 
 	rowChange := &entities.RowChange{
 		ChangeType: entities.ChangeTypeDelete,

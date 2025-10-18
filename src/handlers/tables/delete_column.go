@@ -16,11 +16,11 @@ type deleteColumnHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
 	changelogService services.IChangelogService
-	hub              *web_sockets.Hub
+	tablesHub        *web_sockets.Hub
 }
 
 func newDeleteColumnHandler(
-	hub *web_sockets.Hub,
+	tablesHub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 	changelogService services.IChangelogService,
@@ -29,7 +29,7 @@ func newDeleteColumnHandler(
 		tablesService:    tablesService,
 		databasesService: databasesService,
 		changelogService: changelogService,
-		hub:              hub,
+		tablesHub:        tablesHub,
 	}
 }
 
@@ -73,7 +73,7 @@ func (h *deleteColumnHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	h.hub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
+	h.tablesHub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
 
 	var deletedCol *entities.TableColumn
 	for _, col := range table.Columns {

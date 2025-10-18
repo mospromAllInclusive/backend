@@ -17,11 +17,11 @@ type editColumnHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
 	changelogService services.IChangelogService
-	hub              *web_sockets.Hub
+	tablesHub        *web_sockets.Hub
 }
 
 func newEditColumnHandler(
-	hub *web_sockets.Hub,
+	tablesHub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 	changelogService services.IChangelogService,
@@ -30,7 +30,7 @@ func newEditColumnHandler(
 		tablesService:    tablesService,
 		databasesService: databasesService,
 		changelogService: changelogService,
-		hub:              hub,
+		tablesHub:        tablesHub,
 	}
 }
 
@@ -108,7 +108,7 @@ func (h *editColumnHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	h.hub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
+	h.tablesHub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
 
 	var columnAfterEdit *entities.TableColumn
 	for _, tableColumn := range table.Columns {

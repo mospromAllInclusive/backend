@@ -13,20 +13,20 @@ import (
 )
 
 type importTableHandler struct {
-	hub              *web_sockets.Hub
+	usersHub         *web_sockets.Hub
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
 	fileService      services.IFileService
 }
 
 func newImportTableHandler(
-	hub *web_sockets.Hub,
+	usersHub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 	fileService services.IFileService,
 ) handlers.IHandler {
 	return &importTableHandler{
-		hub:              hub,
+		usersHub:         usersHub,
 		tablesService:    tablesService,
 		databasesService: databasesService,
 		fileService:      fileService,
@@ -79,6 +79,8 @@ func (h *importTableHandler) Handle(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	_ = common.SendActionToDBUsers(c, h.databasesService, h.usersHub, table.DatabaseID, entities.EventActionFetchDatabases)
 
 	c.JSON(http.StatusOK, common.NewTableResponse(table))
 }
