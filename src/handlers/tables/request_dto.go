@@ -22,11 +22,24 @@ func (c *createTableRequestDto) toEntity() *entities.Table {
 
 type column struct {
 	Name string              `json:"name" binding:"required"`
-	Type entities.ColumnType `json:"type" binding:"required"`
+	Type entities.ColumnType `json:"type" binding:"required,oneof=text numeric enum"`
 }
 
 func (c *column) toEntity() *entities.TableColumn {
 	return &entities.TableColumn{
+		Name: c.Name,
+		Type: c.Type,
+	}
+}
+
+type columnWithID struct {
+	ID string `json:"id" binding:"required"`
+	column
+}
+
+func (c *columnWithID) toEntity() *entities.TableColumn {
+	return &entities.TableColumn{
+		ID:   c.ID,
 		Name: c.Name,
 		Type: c.Type,
 	}
@@ -39,6 +52,11 @@ type requestByTableID struct {
 type addColumnRequestDto struct {
 	TableID string `json:"table_id" binding:"required"`
 	Column  column `json:"column" binding:"required"`
+}
+
+type editColumnRequestDto struct {
+	TableID string       `json:"table_id" binding:"required"`
+	Column  columnWithID `json:"column" binding:"required"`
 }
 
 type defaultColumnRequestDto struct {

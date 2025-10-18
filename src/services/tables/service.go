@@ -57,6 +57,13 @@ func (s *service) CreateTable(ctx context.Context, table *entities.Table) (*enti
 		return nil, err
 	}
 
+	for _, col := range table.Columns {
+		_, err = s.executor.Exec(ctx, table.CreateColumnIndexExpression(col.ID))
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return s.repo.AddTable(ctx, table)
 }
 
@@ -115,6 +122,34 @@ func (s *service) AddColumnToTable(ctx context.Context, column *entities.TableCo
 	_, err = s.executor.Exec(ctx, table.AddColumnExpression(column))
 	if err != nil {
 		return nil, err
+	}
+
+	_, err = s.executor.Exec(ctx, table.CreateColumnIndexExpression(column.ID))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.repo.UpdateTable(ctx, table); err != nil {
+		return nil, err
+	}
+
+	return table, nil
+}
+
+func (s *service) EditTableColumn(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, error) {
+	unlock := s.keyMutex.Lock(tableID)
+	defer unlock()
+
+	table, err := s.repo.GetTableByID(ctx, tableID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, col := range table.Columns {
+		if col.ID == column.ID {
+			col.Name = column.Name
+			col.Type = column.Type
+		}
 	}
 
 	if err := s.repo.UpdateTable(ctx, table); err != nil {
@@ -246,8 +281,8 @@ func (s *service) SetCellValue(ctx context.Context, userID int64, tableID string
 	return s.changelogService.WriteChangelog(ctx, rawChangeInfo.ToChangelogItem(userID, tableID, rowID, columnID, value))
 }
 
-func (s *service) ReadTable(ctx context.Context, table *entities.Table) ([]entities.TableRow, error) {
-	return s.repo.ReadTable(ctx, table)
+func (s *service) ReadTable(ctx context.Context, table *entities.Table, params entities.ReadTableParams) ([]entities.TableRow, error) {
+	return s.repo.ReadTable(ctx, table, params)
 }
 
 func genUUID() string {

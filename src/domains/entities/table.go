@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/elgris/sqrl"
+	"github.com/elgris/sqrl/pg"
 )
 
 const (
@@ -52,6 +53,10 @@ func (t *Table) CreateSortIndexExpression() sql_executor.IToSQL {
 	return sqrl.Expr(fmt.Sprintf("create index if not exists %s_order_idx on %s.%s (sort_index asc, sort_index_version desc)", t.ID, UsersTablespace, t.ID))
 }
 
+func (t *Table) CreateColumnIndexExpression(columnID string) sql_executor.IToSQL {
+	return sqrl.Expr(fmt.Sprintf("create index if not exists %s_%s_trgm_idx on %s.%s USING gin (%s gin_trgm_ops)", t.ID, columnID, UsersTablespace, t.ID, columnID))
+}
+
 func (t *Table) AddColumnExpression(column *TableColumn) sql_executor.IToSQL {
 	builder := strings.Builder{}
 	builder.WriteString(fmt.Sprintf("ALTER TABLE %s.%s ADD COLUMN %s text", UsersTablespace, t.ID, column.ID))
@@ -69,6 +74,44 @@ func (t *Table) ReturningCols() []string {
 	}
 
 	return returningCols
+}
+
+func (t *Table) ValidateParams(params *ReadTableParams) bool {
+	return t.ValidateFilter(params) && t.ValidateSort(params)
+}
+
+func (t *Table) ValidateFilter(params *ReadTableParams) bool {
+	if params.FilterBy == nil {
+		return true
+	}
+
+	for _, col := range t.Columns {
+		if col.DeletedAt != nil {
+			continue
+		}
+		if col.ID == *params.FilterBy {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (t *Table) ValidateSort(params *ReadTableParams) bool {
+	if params.SortBy == nil {
+		return true
+	}
+
+	for _, col := range t.Columns {
+		if col.DeletedAt != nil {
+			continue
+		}
+		if col.ID == *params.SortBy {
+			return true
+		}
+	}
+
+	return false
 }
 
 type DBTable struct {
@@ -99,14 +142,82 @@ type TableColumn struct {
 type ColumnType string
 
 const (
-	ColumnTypeText  ColumnType = "text"
-	ColumnTypeInt   ColumnType = "int"
-	ColumnTypeFloat ColumnType = "float"
-	ColumnTypeBool  ColumnType = "bool"
+	ColumnTypeText    ColumnType = "text"
+	ColumnTypeNumeric ColumnType = "numeric"
+	ColumnTypeEnum    ColumnType = "enum"
 )
+
+func (t ColumnType) TypeCast() string {
+	switch t {
+	case ColumnTypeNumeric:
+		return "::numeric"
+	default:
+		return ""
+	}
+}
 
 type TableRow map[string]any
 
 func (t TableRow) GetID() int64 {
 	return t["id"].(int64)
+}
+
+type ReadTableParams struct {
+	Page        int     `form:"page" binding:"required,min=1"`
+	PerPage     int     `form:"perPage" binding:"required,min=1,max=1000"`
+	SortBy      *string `form:"sortBy" binding:"omitempty,gt=0"`
+	SortDir     *string `form:"sortDir" binding:"omitempty,oneof=asc desc"`
+	FilterBy    *string `form:"filterBy" binding:"omitempty,gt=0,excluded_without=FilterValue"`
+	FilterValue *string `form:"filterValue" binding:"omitempty,gt=0"`
+}
+
+func (p ReadTableParams) GetLimit() int {
+	return p.PerPage
+}
+
+func (p ReadTableParams) GetOffset() int {
+	return (p.Page - 1) * p.PerPage
+}
+
+func (p ReadTableParams) GetSortBy(t *Table) string {
+	if p.SortBy == nil {
+		return ""
+	}
+
+	sortDir := "asc"
+	if p.SortDir != nil && *p.SortDir == "desc" {
+		sortDir = "desc"
+	}
+
+	var columnType ColumnType
+	for _, col := range t.Columns {
+		if col.ID == *p.SortBy {
+			columnType = col.Type
+			break
+		}
+	}
+
+	return fmt.Sprintf("%s%s %s", *p.SortBy, columnType.TypeCast(), sortDir)
+}
+
+func (p ReadTableParams) GetFilter() (bool, string, interface{}) {
+	if p.FilterBy == nil {
+		return false, "", nil
+	}
+
+	filterSql, filterValue := LikeFilter(*p.FilterValue, *p.FilterBy)
+	return true, filterSql, filterValue
+}
+
+func escapeLike(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `%`, `\%`)
+	s = strings.ReplaceAll(s, `_`, `\_`)
+	return s
+}
+
+func LikeFilter(value string, field string) (string, interface{}) {
+	escaped := fmt.Sprintf("%%%s%%", escapeLike(value))
+	filterSql := fmt.Sprintf("%s ILIKE ANY (?)", field)
+	return filterSql, pg.Array([]string{escaped})
 }

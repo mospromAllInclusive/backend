@@ -14,6 +14,7 @@ func NewHandlers(
 		newCreateTableHandler(tablesService, databasesService),
 		newImportTableHandler(tablesService, databasesService, fileReader),
 		newAddColumnHandler(tablesService, databasesService),
+		newEditColumnHandler(tablesService, databasesService),
 		newDeleteColumnHandler(tablesService, databasesService),
 		newRestoreColumnHandler(tablesService, databasesService),
 		newAddRowHandler(tablesService, databasesService),

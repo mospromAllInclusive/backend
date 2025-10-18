@@ -28,6 +28,7 @@ type ITablesService interface {
 	DeleteTable(ctx context.Context, id string) error
 	RestoreTable(ctx context.Context, id string) error
 	AddColumnToTable(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, error)
+	EditTableColumn(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, error)
 	DeleteColumn(ctx context.Context, columnID string, tableID string) (*entities.Table, error)
 	RestoreColumn(ctx context.Context, columnID string, tableID string) (*entities.Table, error)
 	GetTableByID(ctx context.Context, id string, withDeleted bool) (*entities.Table, error)
@@ -38,7 +39,7 @@ type ITablesService interface {
 	RestoreRow(ctx context.Context, tableID string, rowID int64) error
 	MoveRow(ctx context.Context, tableID string, rowID int64, sortIndex int64) error
 	SetCellValue(ctx context.Context, userID int64, tableID string, rowID int64, columnID string, value *string) error
-	ReadTable(ctx context.Context, table *entities.Table) ([]entities.TableRow, error)
+	ReadTable(ctx context.Context, table *entities.Table, params entities.ReadTableParams) ([]entities.TableRow, error)
 }
 
 type IDatabasesService interface {

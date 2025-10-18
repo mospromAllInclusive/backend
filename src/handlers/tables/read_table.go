@@ -26,6 +26,12 @@ func newReadTableHandler(
 }
 
 func (h *readTableHandler) Handle(c *gin.Context) {
+	var q entities.ReadTableParams
+	if err := c.ShouldBindQuery(&q); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	tableID := c.Param("id")
 	if tableID == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid table id"})
@@ -41,6 +47,10 @@ func (h *readTableHandler) Handle(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if !table.ValidateParams(&q) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid filter"})
+		return
+	}
 
 	authorized, err := h.databasesService.CheckUserRole(c, c.MustGet("user_id").(int64), table.DatabaseID, entities.RoleReader)
 	if err != nil {
@@ -52,7 +62,7 @@ func (h *readTableHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	rows, err := h.tablesService.ReadTable(c, table)
+	rows, err := h.tablesService.ReadTable(c, table, q)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

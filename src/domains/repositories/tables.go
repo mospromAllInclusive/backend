@@ -195,12 +195,23 @@ func (r *tablesRepository) SetCellValue(ctx context.Context, tableID string, row
 	return changeInfo, err
 }
 
-func (r *tablesRepository) ReadTable(ctx context.Context, table *entities.Table) ([]entities.TableRow, error) {
+func (r *tablesRepository) ReadTable(ctx context.Context, table *entities.Table, params entities.ReadTableParams) ([]entities.TableRow, error) {
+	orderBys := make([]string, 0, 3)
+	if orderBy := params.GetSortBy(table); orderBy != "" {
+		orderBys = append(orderBys, orderBy)
+	}
+	orderBys = append(orderBys, "sort_index ASC", "sort_index_version DESC")
+
 	q := sqrl.Select(table.ReturningCols()...).
 		From(fmt.Sprintf("%s.%s", entities.UsersTablespace, table.ID)).
 		Where(sqrl.Eq{"deleted_at": nil}).
-		OrderBy("sort_index ASC", "sort_index_version DESC").
+		OrderBy(orderBys...).
+		Limit(uint64(params.GetLimit())).Offset(uint64(params.GetOffset())).
 		PlaceholderFormat(sqrl.Dollar)
+
+	if ok, filter, filterValue := params.GetFilter(); ok {
+		q = q.Where(sqrl.Expr(filter, filterValue))
+	}
 
 	var rows []entities.TableRow
 	err := r.executor.Run(ctx, &rows, q)
