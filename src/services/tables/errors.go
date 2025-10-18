@@ -1,6 +1,9 @@
 package tables
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type ErrorTableNotFound struct{}
 
@@ -22,4 +25,16 @@ func (e ErrorColumnNotFound) Error() string {
 func IsErrColumnNotFound(err error) bool {
 	target := ErrorColumnNotFound{}
 	return errors.As(err, &target)
+}
+
+type ErrorInvalidColumnValue struct {
+	Value *string
+}
+
+func (e *ErrorInvalidColumnValue) Error() string {
+	val := "null"
+	if e.Value != nil {
+		val = *e.Value
+	}
+	return fmt.Sprintf("Invalid column value `%s`", val)
 }

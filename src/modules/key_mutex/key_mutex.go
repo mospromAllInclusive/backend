@@ -5,14 +5,28 @@ import (
 )
 
 type keyMutex struct {
-	m  map[string]*sync.Mutex
+	m  map[string]*sync.RWMutex
 	mu sync.RWMutex
 }
 
 func NewKeyMutex() IKeyMutex {
 	return &keyMutex{
-		m: make(map[string]*sync.Mutex),
+		m: make(map[string]*sync.RWMutex),
 	}
+}
+
+func (km *keyMutex) RLock(key string) func() {
+	mu, ok := km.tryGetMutex(key)
+	if !ok {
+		km.registerForKey(key)
+	}
+	mu, ok = km.tryGetMutex(key)
+	if !ok {
+		panic("missing mutex for key at keyMutex")
+	}
+
+	mu.RLock()
+	return mu.RUnlock
 }
 
 func (km *keyMutex) Lock(key string) func() {
@@ -29,7 +43,7 @@ func (km *keyMutex) Lock(key string) func() {
 	return mu.Unlock
 }
 
-func (km *keyMutex) tryGetMutex(key string) (*sync.Mutex, bool) {
+func (km *keyMutex) tryGetMutex(key string) (*sync.RWMutex, bool) {
 	km.mu.RLock()
 	defer km.mu.RUnlock()
 	mu, ok := km.m[key]
@@ -42,5 +56,5 @@ func (km *keyMutex) registerForKey(key string) {
 	if _, ok := km.m[key]; ok {
 		return
 	}
-	km.m[key] = &sync.Mutex{}
+	km.m[key] = &sync.RWMutex{}
 }

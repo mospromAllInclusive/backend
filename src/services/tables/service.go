@@ -112,9 +112,6 @@ func (s *service) RestoreTable(ctx context.Context, tableID string) error {
 }
 
 func (s *service) AddColumnToTable(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, error) {
-	unlock := s.keyMutex.Lock(tableID)
-	defer unlock()
-
 	table, err := s.repo.GetTableByID(ctx, tableID, false)
 	if err != nil {
 		return nil, err
@@ -141,9 +138,6 @@ func (s *service) AddColumnToTable(ctx context.Context, column *entities.TableCo
 }
 
 func (s *service) EditTableColumn(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, bool, error) {
-	unlock := s.keyMutex.Lock(tableID)
-	defer unlock()
-
 	table, err := s.repo.GetTableByID(ctx, tableID, false)
 	if err != nil {
 		return nil, false, err
@@ -175,9 +169,6 @@ func (s *service) EditTableColumn(ctx context.Context, column *entities.TableCol
 }
 
 func (s *service) DeleteColumn(ctx context.Context, columnID string, tableID string) (*entities.Table, error) {
-	unlock := s.keyMutex.Lock(tableID)
-	defer unlock()
-
 	table, err := s.repo.GetTableByID(ctx, tableID, false)
 	if err != nil {
 		return nil, err
@@ -203,9 +194,6 @@ func (s *service) DeleteColumn(ctx context.Context, columnID string, tableID str
 }
 
 func (s *service) RestoreColumn(ctx context.Context, columnID string, tableID string) (*entities.Table, error) {
-	unlock := s.keyMutex.Lock(tableID)
-	defer unlock()
-
 	table, err := s.repo.GetTableByID(ctx, tableID, false)
 	if err != nil {
 		return nil, err
@@ -311,6 +299,30 @@ func (s *service) ExportTable(ctx context.Context, table *entities.Table) (*exce
 	}
 
 	return s.fileService.CreateExcel(table, rows)
+}
+
+func (s *service) ValidateColumnValues(ctx context.Context, tableID string, column *entities.TableColumn) ([]*string, error) {
+	values, err := s.repo.GetDistinctValues(ctx, tableID, column.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	invalidValues := make([]*string, 0)
+	for _, value := range values {
+		if !column.ValidateColumnValue(value) {
+			invalidValues = append(invalidValues, value)
+		}
+	}
+
+	return invalidValues, nil
+}
+
+func (s *service) LockTable(tableID string) func() {
+	return s.keyMutex.Lock(tableID)
+}
+
+func (s *service) ReadLockTable(tableID string) func() {
+	return s.keyMutex.RLock(tableID)
 }
 
 func genUUID() string {

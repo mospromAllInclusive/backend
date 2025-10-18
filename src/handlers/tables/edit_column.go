@@ -37,6 +37,8 @@ func (h *editColumnHandler) Handle(c *gin.Context) {
 		return
 	}
 
+	unlock := h.tablesService.LockTable(req.TableID)
+	defer unlock()
 	table, err := h.tablesService.GetTableByID(c, req.TableID, false)
 	if err != nil {
 		if tables.IsErrTableNotFound(err) {
@@ -62,6 +64,33 @@ func (h *editColumnHandler) Handle(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	columnExists := false
+	for _, tableColumn := range table.Columns {
+		if tableColumn.ID == col.ID {
+			if tableColumn.DeletedAt != nil {
+				break
+			}
+			columnExists = true
+			break
+		}
+	}
+
+	if !columnExists {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "column not found"})
+		return
+	}
+
+	invalidValues, err := h.tablesService.ValidateColumnValues(c, req.TableID, col)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if len(invalidValues) > 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, invalidColumValuesResponse{InvalidValues: invalidValues})
+		return
+	}
+
 	table, _, err = h.tablesService.EditTableColumn(c, col, req.TableID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

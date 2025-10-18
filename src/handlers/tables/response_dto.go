@@ -46,3 +46,7 @@ func newTableWithDataResponse(table *entities.Table, rows []entities.TableRow, t
 
 	return res
 }
+
+type invalidColumValuesResponse struct {
+	InvalidValues []*string `json:"invalid_values"`
+}

@@ -42,6 +42,8 @@ func (h *addRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
+	unlock := h.tablesService.LockTable(tableID)
+	defer unlock()
 	table, err := h.tablesService.GetTableByID(c, tableID, false)
 	if err != nil {
 		if tables.IsErrTableNotFound(err) {
@@ -63,19 +65,30 @@ func (h *addRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	existentColumns := make(map[string]struct{}, len(table.Columns))
+	existentColumns := make(map[string]*entities.TableColumn, len(table.Columns))
 	for _, col := range table.Columns {
 		if col.DeletedAt != nil {
 			continue
 		}
-		existentColumns[col.ID] = struct{}{}
+		existentColumns[col.ID] = col
 	}
 
-	for colID := range req.Data {
-		if _, ok := existentColumns[colID]; !ok {
+	invalidValues := make([]*string, 0)
+	for colID, value := range req.Data {
+		column, ok := existentColumns[colID]
+		if !ok {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "column " + colID + " does not exist"})
 			return
 		}
+
+		if !column.ValidateColumnValue(value) {
+			invalidValues = append(invalidValues, value)
+		}
+	}
+
+	if len(invalidValues) > 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, invalidColumValuesResponse{InvalidValues: invalidValues})
+		return
 	}
 
 	row, err := h.tablesService.AddRow(c, userID, table, req.Data, req.SortIndex)

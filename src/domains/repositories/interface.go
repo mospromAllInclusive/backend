@@ -48,6 +48,7 @@ type ITablesRepository interface {
 	GetTotalRows(ctx context.Context, table *entities.Table, params *entities.ReadTableParams) (int64, error)
 	AddRows(ctx context.Context, table *entities.Table, data []map[string]*string) error
 	AddFullFilledRows(ctx context.Context, table *entities.Table, rows [][]*string) error
+	GetDistinctValues(ctx context.Context, tableID, columnID string) ([]*string, error)
 }
 
 type IDatabasesRepository interface {

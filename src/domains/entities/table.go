@@ -166,9 +166,10 @@ func (c *TableColumn) NeedToBeUpdated(new *TableColumn) bool {
 type ColumnType string
 
 const (
-	ColumnTypeText    ColumnType = "text"
-	ColumnTypeNumeric ColumnType = "numeric"
-	ColumnTypeEnum    ColumnType = "enum"
+	ColumnTypeText      ColumnType = "text"
+	ColumnTypeNumeric   ColumnType = "numeric"
+	ColumnTypeEnum      ColumnType = "enum"
+	ColumnTypeTimestamp ColumnType = "timestamp"
 )
 
 func (t ColumnType) TypeCast() string {

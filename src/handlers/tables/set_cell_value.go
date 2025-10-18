@@ -42,6 +42,8 @@ func (h *setCellValueHandler) Handle(c *gin.Context) {
 		return
 	}
 
+	unlock := h.tablesService.LockTable(tableID)
+	defer unlock()
 	table, err := h.tablesService.GetTableByID(c, tableID, false)
 	if err != nil {
 		if tables.IsErrTableNotFound(err) {
@@ -60,6 +62,26 @@ func (h *setCellValueHandler) Handle(c *gin.Context) {
 	}
 	if !authorized {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "user does not have writer role"})
+		return
+	}
+
+	var targetColumn *entities.TableColumn
+	for _, col := range table.Columns {
+		if col.ID == req.ColumnID {
+			if col.DeletedAt != nil {
+				break
+			}
+			targetColumn = col
+			break
+		}
+	}
+	if targetColumn == nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "column not found"})
+		return
+	}
+
+	if !targetColumn.ValidateColumnValue(req.Value) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid value"})
 		return
 	}
 

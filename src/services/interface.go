@@ -42,6 +42,9 @@ type ITablesService interface {
 	ReadTable(ctx context.Context, table *entities.Table, params entities.ReadTableParams) ([]entities.TableRow, error)
 	GetTotalRows(ctx context.Context, table *entities.Table, params entities.ReadTableParams) (int64, error)
 	ExportTable(ctx context.Context, table *entities.Table) (*excelize.File, error)
+	ValidateColumnValues(ctx context.Context, tableID string, column *entities.TableColumn) ([]*string, error)
+	LockTable(tableID string) func()
+	ReadLockTable(tableID string) func()
 }
 
 type IDatabasesService interface {

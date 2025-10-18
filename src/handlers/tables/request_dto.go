@@ -29,7 +29,7 @@ func (c *createTableRequestDto) toEntity() (*entities.Table, error) {
 
 type column struct {
 	Name string              `json:"name" binding:"required"`
-	Type entities.ColumnType `json:"type" binding:"required,oneof=text numeric enum"`
+	Type entities.ColumnType `json:"type" binding:"required,oneof=text numeric enum timestamp"`
 	Enum []string            `json:"enum" binding:"omitempty,dive,required"`
 }
 

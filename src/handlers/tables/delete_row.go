@@ -42,6 +42,8 @@ func (h *deleteRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
+	unlock := h.tablesService.LockTable(tableID)
+	defer unlock()
 	table, err := h.tablesService.GetTableByID(c, tableID, false)
 	if err != nil {
 		if tables.IsErrTableNotFound(err) {

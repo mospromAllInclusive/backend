@@ -37,6 +37,8 @@ func (h *deleteColumnHandler) Handle(c *gin.Context) {
 		return
 	}
 
+	unlock := h.tablesService.LockTable(req.TableID)
+	defer unlock()
 	table, err := h.tablesService.GetTableByID(c, req.TableID, false)
 	if err != nil {
 		if tables.IsErrTableNotFound(err) {

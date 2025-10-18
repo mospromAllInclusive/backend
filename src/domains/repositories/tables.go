@@ -301,3 +301,14 @@ func (r *tablesRepository) AddFullFilledRows(ctx context.Context, table *entitie
 	_, err := r.executor.Exec(ctx, q)
 	return err
 }
+
+func (r *tablesRepository) GetDistinctValues(ctx context.Context, tableID, columnID string) ([]*string, error) {
+	q := sqrl.Select("DISTINCT " + columnID).
+		From(fmt.Sprintf("%s.%s", entities.UsersTablespace, tableID)).
+		Where(sqrl.Eq{"deleted_at": nil}).
+		PlaceholderFormat(sqrl.Dollar)
+
+	var values []*string
+	err := r.executor.Run(ctx, &values, q)
+	return values, err
+}

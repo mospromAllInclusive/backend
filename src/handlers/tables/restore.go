@@ -56,6 +56,8 @@ func (h *restoreTableHandler) Handle(c *gin.Context) {
 		return
 	}
 
+	unlock := h.tablesService.LockTable(req.TableID)
+	defer unlock()
 	err = h.tablesService.RestoreTable(c, req.TableID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
