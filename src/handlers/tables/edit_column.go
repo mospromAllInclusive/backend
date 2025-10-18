@@ -119,7 +119,7 @@ func (h *editColumnHandler) Handle(c *gin.Context) {
 	}
 
 	columnChange := &entities.ColumnChange{
-		ChangeType: entities.ChangeTypeAdd,
+		ChangeType: entities.ChangeTypeUpdate,
 		Before:     columnBeforeEdit,
 		After:      columnAfterEdit,
 	}
