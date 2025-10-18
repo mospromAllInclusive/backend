@@ -206,3 +206,64 @@ func (r *tablesRepository) ReadTable(ctx context.Context, table *entities.Table)
 	err := r.executor.Run(ctx, &rows, q)
 	return rows, err
 }
+
+func (r *tablesRepository) AddRows(ctx context.Context, table *entities.Table, data []map[string]*string) error {
+	cols := make([]string, 0, len(table.Columns)+1)
+	cols = append(cols, "sort_index_version")
+	for _, col := range table.Columns {
+		if col.DeletedAt != nil {
+			continue
+		}
+		cols = append(cols, col.ID)
+	}
+
+	q := sqrl.Insert(fmt.Sprintf("%s.%s", entities.UsersTablespace, table.ID)).
+		Columns(cols...)
+
+	now := time.Now().UnixNano()
+	for _, rowData := range data {
+		values := make([]interface{}, 0, len(cols))
+		values = append(values, now)
+		for _, col := range table.Columns {
+			if col.DeletedAt != nil {
+				continue
+			}
+			values = append(values, rowData[col.ID])
+		}
+		q = q.Values(values...)
+	}
+
+	q = q.PlaceholderFormat(sqrl.Dollar)
+
+	_, err := r.executor.Exec(ctx, q)
+	return err
+}
+
+func (r *tablesRepository) AddFullFilledRows(ctx context.Context, table *entities.Table, rows [][]*string) error {
+	cols := make([]string, 0, len(table.Columns)+1)
+	cols = append(cols, "sort_index_version")
+	for _, col := range table.Columns {
+		if col.DeletedAt != nil {
+			continue
+		}
+		cols = append(cols, col.ID)
+	}
+
+	q := sqrl.Insert(fmt.Sprintf("%s.%s", entities.UsersTablespace, table.ID)).
+		Columns(cols...)
+
+	now := time.Now().UnixNano()
+	for _, row := range rows {
+		values := make([]interface{}, 0, len(cols))
+		values = append(values, now)
+		for _, val := range row {
+			values = append(values, val)
+		}
+		q = q.Values(values...)
+	}
+
+	q = q.PlaceholderFormat(sqrl.Dollar)
+
+	_, err := r.executor.Exec(ctx, q)
+	return err
+}

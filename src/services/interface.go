@@ -3,8 +3,11 @@ package services
 import (
 	"backend/src/domains/entities"
 	"context"
+	"encoding/csv"
+	"mime/multipart"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 )
 
 type IUsersService interface {
@@ -21,6 +24,7 @@ type IAuthService interface {
 
 type ITablesService interface {
 	CreateTable(ctx context.Context, table *entities.Table) (*entities.Table, error)
+	ImportTable(ctx context.Context, name string, databaseID int64, columns []string, data [][]*string) (*entities.Table, error)
 	DeleteTable(ctx context.Context, id string) error
 	RestoreTable(ctx context.Context, id string) error
 	AddColumnToTable(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, error)
@@ -55,4 +59,10 @@ type IChangelogService interface {
 		columnID string,
 		rowID int64,
 	) ([]*entities.ChangelogItemWithUserInfo, error)
+}
+
+type IFileReader interface {
+	ReadFile(file *multipart.FileHeader) ([]string, [][]*string, error)
+	ReadExcel(f *excelize.File) ([]string, [][]*string, error)
+	ReadCSV(r *csv.Reader) ([]string, [][]*string, error)
 }

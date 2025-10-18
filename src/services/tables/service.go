@@ -27,7 +27,11 @@ type service struct {
 	keyMutex         key_mutex.IKeyMutex
 }
 
-func NewService(executor sql_executor.ISQLExecutor, repo repositories.ITablesRepository, changelogService services.IChangelogService) services.ITablesService {
+func NewService(
+	executor sql_executor.ISQLExecutor,
+	repo repositories.ITablesRepository,
+	changelogService services.IChangelogService,
+) services.ITablesService {
 	return &service{
 		executor:         executor,
 		repo:             repo,
@@ -51,6 +55,38 @@ func (s *service) CreateTable(ctx context.Context, table *entities.Table) (*enti
 	_, err = s.executor.Exec(ctx, table.CreateSortIndexExpression())
 	if err != nil {
 		return nil, err
+	}
+
+	return s.repo.AddTable(ctx, table)
+}
+
+func (s *service) ImportTable(ctx context.Context, name string, databaseID int64, columns []string, data [][]*string) (*entities.Table, error) {
+	rowsLimitPerInsert := 60000 / (len(columns) + 1)
+	if rowsLimitPerInsert < 1 {
+		return nil, fmt.Errorf("too many columns")
+	}
+
+	table := genDefaultTable(databaseID, name, columns)
+
+	_, err := s.executor.Exec(ctx, table.CreateExpression())
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.executor.Exec(ctx, table.CreateSortIndexExpression())
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < len(data); i += rowsLimitPerInsert {
+		end := i + rowsLimitPerInsert
+		if end > len(data) {
+			end = len(data)
+		}
+
+		if err := s.repo.AddFullFilledRows(ctx, table, data[i:end]); err != nil {
+			return nil, err
+		}
 	}
 
 	return s.repo.AddTable(ctx, table)
@@ -216,4 +252,23 @@ func (s *service) ReadTable(ctx context.Context, table *entities.Table) ([]entit
 
 func genUUID() string {
 	return strings.ReplaceAll(uuid.New().String(), "-", "")
+}
+
+func genDefaultTable(databaseID int64, name string, columns []string) *entities.Table {
+	table := &entities.Table{
+		ID:         fmt.Sprintf(tableIDTemplate, genUUID()),
+		Name:       name,
+		DatabaseID: databaseID,
+		Columns:    make([]*entities.TableColumn, 0, len(columns)),
+	}
+
+	for _, col := range columns {
+		table.Columns = append(table.Columns, &entities.TableColumn{
+			ID:   fmt.Sprintf(columnIDTemplate, genUUID()),
+			Name: col,
+			Type: entities.ColumnTypeText,
+		})
+	}
+
+	return table
 }

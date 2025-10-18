@@ -8,9 +8,11 @@ import (
 func NewHandlers(
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
+	fileReader services.IFileReader,
 ) []handlers.IHandler {
 	return []handlers.IHandler{
 		newCreateTableHandler(tablesService, databasesService),
+		newImportTableHandler(tablesService, databasesService, fileReader),
 		newAddColumnHandler(tablesService, databasesService),
 		newDeleteColumnHandler(tablesService, databasesService),
 		newRestoreColumnHandler(tablesService, databasesService),
