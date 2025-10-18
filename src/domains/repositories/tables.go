@@ -221,6 +221,10 @@ func (r *tablesRepository) ReadTable(ctx context.Context, table *entities.Table,
 			q = q.Where(sqrl.Expr(filter, filterValue))
 		}
 
+		if search := params.GetSearch(table); search != nil {
+			q = q.Where(search)
+		}
+
 		if orderBy := params.GetSortBy(table); orderBy != "" {
 			orderBys = append(orderBys, orderBy)
 		}
@@ -245,6 +249,10 @@ func (r *tablesRepository) GetTotalRows(ctx context.Context, table *entities.Tab
 	if params != nil {
 		if ok, filter, filterValue := params.GetFilter(); ok {
 			q = q.Where(sqrl.Expr(filter, filterValue))
+		}
+
+		if search := params.GetSearch(table); search != nil {
+			q = q.Where(search)
 		}
 	}
 

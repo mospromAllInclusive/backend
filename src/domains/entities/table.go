@@ -194,6 +194,7 @@ type ReadTableParams struct {
 	SortDir     *string `form:"sortDir" binding:"omitempty,oneof=asc desc"`
 	FilterBy    *string `form:"filterBy" binding:"omitempty,gt=0,excluded_without=FilterValue"`
 	FilterValue *string `form:"filterValue" binding:"omitempty,gt=0"`
+	SearchValue *string `form:"searchValue" binding:"omitempty,gt=0"`
 }
 
 func (p ReadTableParams) GetLimit() int {
@@ -232,6 +233,26 @@ func (p ReadTableParams) GetFilter() (bool, string, interface{}) {
 
 	filterSql, filterValue := LikeFilter(*p.FilterValue, *p.FilterBy)
 	return true, filterSql, filterValue
+}
+
+func (p ReadTableParams) GetSearch(t *Table) sqrl.Or {
+	if p.SearchValue == nil {
+		return nil
+	}
+
+	conds := sqrl.Or{}
+	for _, col := range t.Columns {
+		if col.DeletedAt != nil {
+			continue
+		}
+
+		conds = sqrl.Or{
+			conds,
+			sqrl.Expr(LikeFilter(*p.SearchValue, col.ID)),
+		}
+	}
+
+	return conds
 }
 
 func escapeLike(s string) string {
