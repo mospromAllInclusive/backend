@@ -50,7 +50,7 @@ func (h *exportTableHandler) Handle(c *gin.Context) {
 		return
 	}
 	if !authorized {
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "user does not have writer role"})
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "user does not have reader role"})
 		return
 	}
 
