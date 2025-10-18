@@ -4,6 +4,7 @@ import (
 	"backend/src/handlers"
 	"backend/src/handlers/changelog"
 	"backend/src/handlers/databases"
+	"backend/src/handlers/events"
 	"backend/src/handlers/tables"
 	"backend/src/handlers/users"
 	"backend/src/modules/web_sockets"
@@ -75,6 +76,7 @@ func (a *App) initHandlers() []handlers.IHandler {
 	)...)
 	res = append(res, users.NewHandlers(a.Services.AuthService, a.Services.UsersService)...)
 	res = append(res, changelog.NewHandlers(a.Services.ChangelogService, a.Services.TablesService, a.Services.DatabasesService)...)
+	res = append(res, events.NewHandlers(a.Services.UsersService, a.Resources.TablesWSHub)...)
 
 	return res
 }
