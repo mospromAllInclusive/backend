@@ -43,7 +43,7 @@ func TryParseTimestamp(s string) (time.Time, string, error) {
 }
 
 func (c *TableColumn) ValidateColumnValue(value *string) bool {
-	if value == nil {
+	if value == nil || *value == "" {
 		return true
 	}
 
