@@ -3,6 +3,7 @@ package tables
 import (
 	"backend/src/domains/entities"
 	"backend/src/handlers"
+	"backend/src/modules/web_sockets"
 	"backend/src/services"
 	"backend/src/services/tables"
 	"net/http"
@@ -13,15 +14,18 @@ import (
 type deleteRowHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
+	hub              *web_sockets.Hub
 }
 
 func newDeleteRowHandler(
+	hub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
 	return &deleteRowHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
+		hub:              hub,
 	}
 }
 
@@ -64,6 +68,7 @@ func (h *deleteRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
+	h.hub.Broadcast(tableID, entities.EventActionFetchTable, nil)
 	c.Status(http.StatusOK)
 }
 

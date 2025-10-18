@@ -4,6 +4,7 @@ import (
 	"backend/src/domains/entities"
 	"backend/src/handlers"
 	"backend/src/handlers/common"
+	"backend/src/modules/web_sockets"
 	"backend/src/services"
 	"net/http"
 	"strconv"
@@ -12,17 +13,20 @@ import (
 )
 
 type importTableHandler struct {
+	hub              *web_sockets.Hub
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
 	fileService      services.IFileService
 }
 
 func newImportTableHandler(
+	hub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 	fileService services.IFileService,
 ) handlers.IHandler {
 	return &importTableHandler{
+		hub:              hub,
 		tablesService:    tablesService,
 		databasesService: databasesService,
 		fileService:      fileService,

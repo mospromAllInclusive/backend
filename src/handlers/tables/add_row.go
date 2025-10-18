@@ -3,6 +3,7 @@ package tables
 import (
 	"backend/src/domains/entities"
 	"backend/src/handlers"
+	"backend/src/modules/web_sockets"
 	"backend/src/services"
 	"backend/src/services/tables"
 	"net/http"
@@ -11,17 +12,20 @@ import (
 )
 
 type addRowHandler struct {
+	hub              *web_sockets.Hub
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
 }
 
 func newAddRowHandler(
+	hub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
 	return &addRowHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
+		hub:              hub,
 	}
 }
 
@@ -80,6 +84,7 @@ func (h *addRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
+	h.hub.Broadcast(tableID, entities.EventActionFetchTable, nil)
 	c.JSON(http.StatusOK, newRowResponse(row))
 }
 

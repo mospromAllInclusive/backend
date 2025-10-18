@@ -4,6 +4,7 @@ import (
 	"backend/src/domains/entities"
 	"backend/src/handlers"
 	"backend/src/handlers/common"
+	"backend/src/modules/web_sockets"
 	"backend/src/services"
 	"backend/src/services/tables"
 	"net/http"
@@ -14,15 +15,18 @@ import (
 type editColumnHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
+	hub              *web_sockets.Hub
 }
 
 func newEditColumnHandler(
+	hub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
 	return &editColumnHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
+		hub:              hub,
 	}
 }
 
@@ -53,13 +57,18 @@ func (h *editColumnHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	col := req.Column.toEntity()
-	table, err = h.tablesService.EditTableColumn(c, col, req.TableID)
+	col, err := req.Column.toEntity()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	table, _, err = h.tablesService.EditTableColumn(c, col, req.TableID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	h.hub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
 	c.JSON(http.StatusOK, common.NewTableResponse(table))
 }
 

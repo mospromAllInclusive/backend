@@ -3,6 +3,7 @@ package tables
 import (
 	"backend/src/domains/entities"
 	"backend/src/handlers"
+	"backend/src/modules/web_sockets"
 	"backend/src/services"
 	"backend/src/services/tables"
 	"net/http"
@@ -13,15 +14,18 @@ import (
 type setCellValueHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
+	hub              *web_sockets.Hub
 }
 
 func newSetCellValueHandler(
+	hub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
 	return &setCellValueHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
+		hub:              hub,
 	}
 }
 
@@ -64,6 +68,12 @@ func (h *setCellValueHandler) Handle(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	h.hub.Broadcast(tableID, entities.EventActionSetCellValue, entities.SetCellValueMessage{
+		RowID:    req.RowID,
+		ColumnID: req.ColumnID,
+		Value:    req.Value,
+	})
 
 	c.Status(http.StatusOK)
 }

@@ -28,7 +28,7 @@ type ITablesService interface {
 	DeleteTable(ctx context.Context, id string) error
 	RestoreTable(ctx context.Context, id string) error
 	AddColumnToTable(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, error)
-	EditTableColumn(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, error)
+	EditTableColumn(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, bool, error)
 	DeleteColumn(ctx context.Context, columnID string, tableID string) (*entities.Table, error)
 	RestoreColumn(ctx context.Context, columnID string, tableID string) (*entities.Table, error)
 	GetTableByID(ctx context.Context, id string, withDeleted bool) (*entities.Table, error)

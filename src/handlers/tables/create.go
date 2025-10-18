@@ -4,6 +4,7 @@ import (
 	"backend/src/domains/entities"
 	"backend/src/handlers"
 	"backend/src/handlers/common"
+	"backend/src/modules/web_sockets"
 	"backend/src/services"
 	"net/http"
 
@@ -11,15 +12,18 @@ import (
 )
 
 type createTableHandler struct {
+	hub              *web_sockets.Hub
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
 }
 
 func newCreateTableHandler(
+	hub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
 	return &createTableHandler{
+		hub:              hub,
 		tablesService:    tablesService,
 		databasesService: databasesService,
 	}
@@ -42,7 +46,11 @@ func (h *createTableHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	table := req.toEntity()
+	table, err := req.toEntity()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	table, err = h.tablesService.CreateTable(c, table)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

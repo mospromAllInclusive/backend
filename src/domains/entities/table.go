@@ -135,8 +135,32 @@ func (t *DBTable) ToTable() *Table {
 type TableColumn struct {
 	Name      string     `json:"name"`
 	Type      ColumnType `json:"type"`
+	Enum      []string   `json:"enum,omitempty"`
 	ID        string     `json:"id"`
 	DeletedAt *time.Time `json:"deleted_at"`
+}
+
+func (c *TableColumn) NeedToBeUpdated(new *TableColumn) bool {
+	if c.Type != new.Type || c.Name != new.Name {
+		return true
+	}
+
+	newEnum := make(map[string]struct{})
+	for _, v := range new.Enum {
+		newEnum[v] = struct{}{}
+	}
+
+	if len(c.Enum) != len(newEnum) {
+		return true
+	}
+
+	for _, k := range c.Enum {
+		if _, ok := newEnum[k]; !ok {
+			return true
+		}
+	}
+
+	return false
 }
 
 type ColumnType string

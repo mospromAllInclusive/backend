@@ -19,6 +19,7 @@ type columnForResponse struct {
 	Name string              `json:"name"`
 	Type entities.ColumnType `json:"type"`
 	ID   string              `json:"id"`
+	Enum []string            `json:"enum"`
 }
 
 func NewTableResponse(table *entities.Table) *TableResponse {
@@ -31,6 +32,7 @@ func NewTableResponse(table *entities.Table) *TableResponse {
 			Name: col.Name,
 			Type: col.Type,
 			ID:   col.ID,
+			Enum: col.Enum,
 		})
 	}
 	return &TableResponse{

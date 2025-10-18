@@ -1,6 +1,9 @@
 package tables
 
-import "backend/src/domains/entities"
+import (
+	"backend/src/domains/entities"
+	"fmt"
+)
 
 type createTableRequestDto struct {
 	Name       string   `json:"name" binding:"required"`
@@ -8,28 +11,56 @@ type createTableRequestDto struct {
 	Columns    []column `json:"columns" binding:"required"`
 }
 
-func (c *createTableRequestDto) toEntity() *entities.Table {
+func (c *createTableRequestDto) toEntity() (*entities.Table, error) {
 	cols := make([]*entities.TableColumn, 0, len(c.Columns))
 	for _, col := range c.Columns {
-		cols = append(cols, col.toEntity())
+		entity, err := col.toEntity()
+		if err != nil {
+			return nil, err
+		}
+		cols = append(cols, entity)
 	}
 	return &entities.Table{
 		Name:       c.Name,
 		DatabaseID: c.DatabaseID,
 		Columns:    cols,
-	}
+	}, nil
 }
 
 type column struct {
 	Name string              `json:"name" binding:"required"`
 	Type entities.ColumnType `json:"type" binding:"required,oneof=text numeric enum"`
+	Enum []string            `json:"enum" binding:"omitempty,dive,required"`
 }
 
-func (c *column) toEntity() *entities.TableColumn {
+func (c *column) DistinctEnum() {
+	if c.Type != entities.ColumnTypeEnum {
+		c.Enum = nil
+	}
+
+	seen := make(map[string]bool)
+	enum := make([]string, 0, len(c.Enum))
+	for _, v := range c.Enum {
+		if seen[v] {
+			continue
+		}
+		seen[v] = true
+		enum = append(enum, v)
+	}
+
+	c.Enum = enum
+}
+
+func (c *column) toEntity() (*entities.TableColumn, error) {
+	if c.Type == entities.ColumnTypeEnum && len(c.Enum) == 0 {
+		return nil, fmt.Errorf("enum column must have at least one value")
+	}
+	c.DistinctEnum()
 	return &entities.TableColumn{
 		Name: c.Name,
 		Type: c.Type,
-	}
+		Enum: c.Enum,
+	}, nil
 }
 
 type columnWithID struct {
@@ -37,12 +68,17 @@ type columnWithID struct {
 	column
 }
 
-func (c *columnWithID) toEntity() *entities.TableColumn {
+func (c *columnWithID) toEntity() (*entities.TableColumn, error) {
+	if c.Type == entities.ColumnTypeEnum && len(c.Enum) == 0 {
+		return nil, fmt.Errorf("enum column must have at least one value")
+	}
+	c.DistinctEnum()
 	return &entities.TableColumn{
 		ID:   c.ID,
 		Name: c.Name,
 		Type: c.Type,
-	}
+		Enum: c.Enum,
+	}, nil
 }
 
 type requestByTableID struct {

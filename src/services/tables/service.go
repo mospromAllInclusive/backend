@@ -140,27 +140,38 @@ func (s *service) AddColumnToTable(ctx context.Context, column *entities.TableCo
 	return table, nil
 }
 
-func (s *service) EditTableColumn(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, error) {
+func (s *service) EditTableColumn(ctx context.Context, column *entities.TableColumn, tableID string) (*entities.Table, bool, error) {
 	unlock := s.keyMutex.Lock(tableID)
 	defer unlock()
 
 	table, err := s.repo.GetTableByID(ctx, tableID, false)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
+	updated := false
 	for _, col := range table.Columns {
 		if col.ID == column.ID {
+			if !col.NeedToBeUpdated(column) {
+				break
+			}
 			col.Name = column.Name
 			col.Type = column.Type
+			col.Enum = column.Enum
+			updated = true
+			break
 		}
 	}
 
-	if err := s.repo.UpdateTable(ctx, table); err != nil {
-		return nil, err
+	if !updated {
+		return table, false, nil
 	}
 
-	return table, nil
+	if err := s.repo.UpdateTable(ctx, table); err != nil {
+		return nil, false, err
+	}
+
+	return table, true, nil
 }
 
 func (s *service) DeleteColumn(ctx context.Context, columnID string, tableID string) (*entities.Table, error) {

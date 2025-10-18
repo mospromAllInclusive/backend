@@ -6,6 +6,7 @@ import (
 	"backend/src/handlers/databases"
 	"backend/src/handlers/tables"
 	"backend/src/handlers/users"
+	"backend/src/modules/web_sockets"
 	"net/http"
 	"time"
 
@@ -42,6 +43,8 @@ func (a *App) initWebServer() {
 		r.Handle(handler.Method(), handler.Path(), h...)
 	}
 
+	r.GET("/ws", web_sockets.ServeWS(a.Resources.WSHub))
+
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "ok",
@@ -55,7 +58,7 @@ func (a *App) initWebServer() {
 func (a *App) initHandlers() []handlers.IHandler {
 	res := make([]handlers.IHandler, 0)
 
-	res = append(res, tables.NewHandlers(a.Services.TablesService, a.Services.DatabasesService, a.Services.FileService)...)
+	res = append(res, tables.NewHandlers(a.Services.TablesService, a.Services.DatabasesService, a.Services.FileService, a.Resources.WSHub)...)
 	res = append(res, databases.NewHandlers(a.Services.TablesService, a.Services.DatabasesService, a.Services.UsersService)...)
 	res = append(res, users.NewHandlers(a.Services.AuthService, a.Services.UsersService)...)
 	res = append(res, changelog.NewHandlers(a.Services.ChangelogService, a.Services.TablesService, a.Services.DatabasesService)...)
