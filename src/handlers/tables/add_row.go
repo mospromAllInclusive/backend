@@ -48,7 +48,8 @@ func (h *addRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	authorized, err := h.databasesService.CheckUserRole(c, c.MustGet("user_id").(int64), table.DatabaseID, entities.RoleWriter)
+	userID := c.MustGet("user_id").(int64)
+	authorized, err := h.databasesService.CheckUserRole(c, userID, table.DatabaseID, entities.RoleWriter)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -73,7 +74,7 @@ func (h *addRowHandler) Handle(c *gin.Context) {
 		}
 	}
 
-	row, err := h.tablesService.AddRow(c, table, req.Data, req.SortIndex)
+	row, err := h.tablesService.AddRow(c, userID, table, req.Data, req.SortIndex)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

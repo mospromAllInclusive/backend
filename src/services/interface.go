@@ -29,11 +29,11 @@ type ITablesService interface {
 	GetTableByID(ctx context.Context, id string, withDeleted bool) (*entities.Table, error)
 	ListByDatabaseID(ctx context.Context, databaseID int64) ([]*entities.Table, error)
 	ListByDatabaseIDs(ctx context.Context, databaseIDs []int64) ([]*entities.Table, error)
-	AddRow(ctx context.Context, table *entities.Table, data map[string]*string, sortIndex *int64) (entities.TableRow, error)
+	AddRow(ctx context.Context, userID int64, table *entities.Table, data map[string]*string, sortIndex *int64) (entities.TableRow, error)
 	DeleteRow(ctx context.Context, tableID string, rowID int64) error
 	RestoreRow(ctx context.Context, tableID string, rowID int64) error
 	MoveRow(ctx context.Context, tableID string, rowID int64, sortIndex int64) error
-	SetCellValue(ctx context.Context, tableID string, rowID int64, columnID string, value *string) error
+	SetCellValue(ctx context.Context, userID int64, tableID string, rowID int64, columnID string, value *string) error
 	ReadTable(ctx context.Context, table *entities.Table) ([]entities.TableRow, error)
 }
 
@@ -45,4 +45,14 @@ type IDatabasesService interface {
 	GetDatabasesUsers(ctx context.Context, databaseID int64) ([]*entities.DatabasesUser, error)
 	CheckUserRole(ctx context.Context, userID, databaseID int64, requiredRole entities.Role) (bool, error)
 	GetUsersDatabaseRole(ctx context.Context, userID, databaseID int64) (entities.Role, error)
+}
+
+type IChangelogService interface {
+	WriteChangelog(ctx context.Context, items ...*entities.ChangelogItem) error
+	ListChangelogForCell(
+		ctx context.Context,
+		tableID string,
+		columnID string,
+		rowID int64,
+	) ([]*entities.ChangelogItemWithUserInfo, error)
 }

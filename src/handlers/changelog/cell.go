@@ -1,4 +1,4 @@
-package tables
+package changelog
 
 import (
 	"backend/src/domains/entities"
@@ -10,35 +10,32 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type setCellValueHandler struct {
+type cellHandler struct {
+	changelogService services.IChangelogService
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
 }
 
-func newSetCellValueHandler(
+func newCellHandler(
+	changelogService services.IChangelogService,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
 ) handlers.IHandler {
-	return &setCellValueHandler{
+	return &cellHandler{
+		changelogService: changelogService,
 		tablesService:    tablesService,
 		databasesService: databasesService,
 	}
 }
 
-func (h *setCellValueHandler) Handle(c *gin.Context) {
-	req := setCellValueRequestDto{}
+func (h *cellHandler) Handle(c *gin.Context) {
+	req := cellRequestDto{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body: " + err.Error()})
 		return
 	}
 
-	tableID := c.Param("id")
-	if tableID == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid table id"})
-		return
-	}
-
-	table, err := h.tablesService.GetTableByID(c, tableID, false)
+	table, err := h.tablesService.GetTableByID(c, req.TableID, false)
 	if err != nil {
 		if tables.IsErrTableNotFound(err) {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "table not found"})
@@ -48,34 +45,33 @@ func (h *setCellValueHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	userID := c.MustGet("user_id").(int64)
-	authorized, err := h.databasesService.CheckUserRole(c, userID, table.DatabaseID, entities.RoleWriter)
+	authorized, err := h.databasesService.CheckUserRole(c, c.MustGet("user_id").(int64), table.DatabaseID, entities.RoleReader)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	if !authorized {
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "user does not have writer role"})
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "user does not have reader role"})
 		return
 	}
 
-	err = h.tablesService.SetCellValue(c, userID, table.ID, req.RowID, req.ColumnID, req.Value)
+	changelog, err := h.changelogService.ListChangelogForCell(c, req.TableID, req.ColumnID, req.RowID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.Status(http.StatusOK)
+	c.JSON(http.StatusOK, newCellChangelogResponse(changelog))
 }
 
-func (h *setCellValueHandler) Path() string {
-	return "/tables/:id/set-cell-value"
+func (h *cellHandler) Path() string {
+	return "/changelog/cell"
 }
 
-func (h *setCellValueHandler) Method() string {
+func (h *cellHandler) Method() string {
 	return http.MethodPost
 }
 
-func (h *setCellValueHandler) AuthRequired() bool {
+func (h *cellHandler) AuthRequired() bool {
 	return true
 }

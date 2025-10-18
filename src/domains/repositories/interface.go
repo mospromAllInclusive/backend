@@ -14,6 +14,8 @@ const (
 	databasesTableWithShortName      = "app.databases as db"
 	usersDatabasesTable              = "app.users_databases"
 	usersDatabasesTableWithShortName = "app.users_databases as udb"
+	changelogTable                   = "app.changelog"
+	changelogTableWithShortName      = "app.changelog as cl"
 )
 
 type ICommonRepository interface {
@@ -41,7 +43,7 @@ type ITablesRepository interface {
 	DeleteRow(ctx context.Context, tableID string, rowID int64) error
 	RestoreRow(ctx context.Context, tableID string, rowID int64) error
 	MoveRow(ctx context.Context, tableID string, rowID int64, sortIndex int64) error
-	SetCellValue(ctx context.Context, tableID string, rowID int64, columnID string, value *string) error
+	SetCellValue(ctx context.Context, tableID string, rowID int64, columnID string, value *string) (*entities.RawCellChangeInfo, error)
 	ReadTable(ctx context.Context, table *entities.Table) ([]entities.TableRow, error)
 }
 
@@ -54,4 +56,15 @@ type IDatabasesRepository interface {
 	GetUsersDatabases(ctx context.Context, userID int64) ([]*entities.UsersDatabase, error)
 	GetDatabasesUsers(ctx context.Context, databaseID int64) ([]*entities.DatabasesUser, error)
 	GetUsersDatabaseRole(ctx context.Context, userID, databaseID int64) (entities.Role, error)
+}
+
+type IChangelogRepository interface {
+	ICommonRepository
+	AddChangelogItems(ctx context.Context, items []*entities.ChangelogItem) error
+	ListChangelogForCell(
+		ctx context.Context,
+		tableID string,
+		columnID string,
+		rowID int64,
+	) ([]*entities.ChangelogItemWithUserInfo, error)
 }

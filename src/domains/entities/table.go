@@ -106,3 +106,7 @@ const (
 )
 
 type TableRow map[string]any
+
+func (t TableRow) GetID() int64 {
+	return t["id"].(int64)
+}

@@ -21,16 +21,18 @@ const (
 )
 
 type service struct {
-	executor sql_executor.ISQLExecutor
-	repo     repositories.ITablesRepository
-	keyMutex key_mutex.IKeyMutex
+	executor         sql_executor.ISQLExecutor
+	repo             repositories.ITablesRepository
+	changelogService services.IChangelogService
+	keyMutex         key_mutex.IKeyMutex
 }
 
-func NewService(executor sql_executor.ISQLExecutor, repo repositories.ITablesRepository) services.ITablesService {
+func NewService(executor sql_executor.ISQLExecutor, repo repositories.ITablesRepository, changelogService services.IChangelogService) services.ITablesService {
 	return &service{
-		executor: executor,
-		repo:     repo,
-		keyMutex: key_mutex.NewKeyMutex(),
+		executor:         executor,
+		repo:             repo,
+		changelogService: changelogService,
+		keyMutex:         key_mutex.NewKeyMutex(),
 	}
 }
 
@@ -158,8 +160,30 @@ func (s *service) ListByDatabaseIDs(ctx context.Context, databaseIDs []int64) ([
 	return s.repo.ListByDatabaseIDs(ctx, databaseIDs)
 }
 
-func (s *service) AddRow(ctx context.Context, table *entities.Table, data map[string]*string, sortIndex *int64) (entities.TableRow, error) {
-	return s.repo.AddRow(ctx, table, data, sortIndex)
+func (s *service) AddRow(ctx context.Context, userID int64, table *entities.Table, data map[string]*string, sortIndex *int64) (entities.TableRow, error) {
+	newRow, err := s.repo.AddRow(ctx, table, data, sortIndex)
+	if err != nil {
+		return entities.TableRow{}, err
+	}
+
+	now := time.Now()
+	changelog := make([]*entities.ChangelogItem, 0, len(data))
+	for col, value := range data {
+		if value == nil {
+			continue
+		}
+		rawInfo := &entities.RawCellChangeInfo{
+			Before:    nil,
+			ChangedAt: now,
+		}
+		changelog = append(changelog, rawInfo.ToChangelogItem(userID, table.ID, newRow.GetID(), col, value))
+	}
+
+	if len(changelog) == 0 {
+		return newRow, nil
+	}
+
+	return newRow, s.changelogService.WriteChangelog(ctx, changelog...)
 }
 
 func (s *service) DeleteRow(ctx context.Context, tableID string, rowID int64) error {
@@ -174,8 +198,16 @@ func (s *service) MoveRow(ctx context.Context, tableID string, rowID int64, sort
 	return s.repo.MoveRow(ctx, tableID, rowID, sortIndex)
 }
 
-func (s *service) SetCellValue(ctx context.Context, tableID string, rowID int64, columnID string, value *string) error {
-	return s.repo.SetCellValue(ctx, tableID, rowID, columnID, value)
+func (s *service) SetCellValue(ctx context.Context, userID int64, tableID string, rowID int64, columnID string, value *string) error {
+	rawChangeInfo, err := s.repo.SetCellValue(ctx, tableID, rowID, columnID, value)
+	if err != nil {
+		if s.repo.IsErrNoRows(err) {
+			return nil
+		}
+		return err
+	}
+
+	return s.changelogService.WriteChangelog(ctx, rawChangeInfo.ToChangelogItem(userID, tableID, rowID, columnID, value))
 }
 
 func (s *service) ReadTable(ctx context.Context, table *entities.Table) ([]entities.TableRow, error) {

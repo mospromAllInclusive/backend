@@ -12,7 +12,7 @@ type rowResponse struct {
 
 func newRowResponse(row entities.TableRow) *rowResponse {
 	res := &rowResponse{
-		ID:   row["id"].(int64),
+		ID:   row.GetID(),
 		Data: make(map[string]interface{}),
 	}
 

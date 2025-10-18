@@ -180,14 +180,19 @@ func (r *tablesRepository) MoveRow(ctx context.Context, tableID string, rowID in
 	return err
 }
 
-func (r *tablesRepository) SetCellValue(ctx context.Context, tableID string, rowID int64, columnID string, value *string) error {
-	q := sqrl.Update(fmt.Sprintf("%s.%s", entities.UsersTablespace, tableID)).
+func (r *tablesRepository) SetCellValue(ctx context.Context, tableID string, rowID int64, columnID string, value *string) (*entities.RawCellChangeInfo, error) {
+	q := sqrl.Update(fmt.Sprintf("%s.%s as t", entities.UsersTablespace, tableID)).
 		Set(columnID, value).
-		Where(sqrl.Eq{"id": rowID}).
-		PlaceholderFormat(sqrl.Dollar)
+		From("old_data").
+		Where(sqrl.Eq{"t.id": rowID}).
+		PlaceholderFormat(sqrl.Dollar).
+		Returning("old_data.v as before, now() as changed_at")
 
-	_, err := r.executor.Exec(ctx, q)
-	return err
+	q = q.Prefix(fmt.Sprintf("WITH old_data AS (SELECT %s as v FROM %s.%s WHERE id = ?)", columnID, entities.UsersTablespace, tableID), rowID)
+
+	changeInfo := &entities.RawCellChangeInfo{}
+	err := r.executor.Run(ctx, changeInfo, q)
+	return changeInfo, err
 }
 
 func (r *tablesRepository) ReadTable(ctx context.Context, table *entities.Table) ([]entities.TableRow, error) {

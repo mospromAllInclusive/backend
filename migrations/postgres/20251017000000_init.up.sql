@@ -1,3 +1,6 @@
+ALTER DATABASE simple_table SET TIMEZONE TO 'Europe/Moscow';
+SELECT pg_reload_conf();
+
 create schema if not exists app;
 
 create table if not exists app.users
@@ -6,8 +9,8 @@ create table if not exists app.users
     name       text      not null,
     email      text      not null,
     password   text      not null,
-    created_at timestamp not null default now(),
-    updated_at timestamp not null default now(),
+    created_at timestamp with time zone not null default now(),
+    updated_at timestamp with time zone not null default now(),
     deleted_at timestamp
 );
 

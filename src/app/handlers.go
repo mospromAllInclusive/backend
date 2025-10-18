@@ -2,6 +2,7 @@ package app
 
 import (
 	"backend/src/handlers"
+	"backend/src/handlers/changelog"
 	"backend/src/handlers/databases"
 	"backend/src/handlers/tables"
 	"backend/src/handlers/users"
@@ -57,6 +58,7 @@ func (a *App) initHandlers() []handlers.IHandler {
 	res = append(res, tables.NewHandlers(a.Services.TablesService, a.Services.DatabasesService)...)
 	res = append(res, databases.NewHandlers(a.Services.TablesService, a.Services.DatabasesService, a.Services.UsersService)...)
 	res = append(res, users.NewHandlers(a.Services.AuthService, a.Services.UsersService)...)
+	res = append(res, changelog.NewHandlers(a.Services.ChangelogService, a.Services.TablesService, a.Services.DatabasesService)...)
 
 	return res
 }
