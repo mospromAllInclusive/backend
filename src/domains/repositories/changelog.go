@@ -72,3 +72,22 @@ func (r *changelogRepository) ListChangelogForCell(
 	err := r.executor.Run(ctx, &items, q)
 	return items, err
 }
+
+func (r *changelogRepository) ListChangelogForTable(
+	ctx context.Context,
+	tableID string,
+) ([]*entities.ChangelogItemWithUserInfo, error) {
+	q := sqrl.Select("*").
+		From(changelogTableWithShortName).
+		Join(usersTableWithShortName + " on cl.user_id = u.id").
+		Where(sqrl.And{
+			sqrl.Eq{"cl.target": entities.ChangeTargetTable},
+			sqrl.Eq{"cl.table_id": tableID},
+		}).
+		PlaceholderFormat(sqrl.Dollar).
+		OrderBy("changed_at ASC")
+
+	var items []*entities.ChangelogItemWithUserInfo
+	err := r.executor.Run(ctx, &items, q)
+	return items, err
+}

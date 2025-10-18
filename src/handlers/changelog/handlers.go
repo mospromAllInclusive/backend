@@ -12,5 +12,6 @@ func NewHandlers(
 ) []handlers.IHandler {
 	return []handlers.IHandler{
 		newCellHandler(changelogService, tablesService, databasesService),
+		newTableHandler(changelogService, tablesService, databasesService),
 	}
 }

@@ -177,6 +177,9 @@ func (s *service) DeleteColumn(ctx context.Context, columnID string, tableID str
 	found := false
 	for _, col := range table.Columns {
 		if col.ID == columnID {
+			if col.DeletedAt != nil {
+				break
+			}
 			col.DeletedAt = pointer.To(time.Now())
 			found = true
 		}
@@ -260,8 +263,17 @@ func (s *service) AddRow(ctx context.Context, userID int64, table *entities.Tabl
 	return newRow, s.changelogService.WriteChangelog(ctx, changelog...)
 }
 
-func (s *service) DeleteRow(ctx context.Context, tableID string, rowID int64) error {
-	return s.repo.DeleteRow(ctx, tableID, rowID)
+func (s *service) DeleteRow(ctx context.Context, tableID string, rowID int64) (entities.TableRow, error) {
+	row, err := s.repo.DeleteRow(ctx, tableID, rowID)
+	if err != nil {
+		if s.repo.IsErrNoRows(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return row, nil
 }
 
 func (s *service) RestoreRow(ctx context.Context, tableID string, rowID int64) error {

@@ -29,3 +29,10 @@ func (s *service) ListChangelogForCell(
 ) ([]*entities.ChangelogItemWithUserInfo, error) {
 	return s.repo.ListChangelogForCell(ctx, tableID, columnID, rowID)
 }
+
+func (s *service) ListChangelogForTable(
+	ctx context.Context,
+	tableID string,
+) ([]*entities.ChangelogItemWithUserInfo, error) {
+	return s.repo.ListChangelogForTable(ctx, tableID)
+}

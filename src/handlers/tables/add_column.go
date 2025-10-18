@@ -16,16 +16,19 @@ type addColumnHandler struct {
 	hub              *web_sockets.Hub
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
+	changelogService services.IChangelogService
 }
 
 func newAddColumnHandler(
 	hub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
+	changelogService services.IChangelogService,
 ) handlers.IHandler {
 	return &addColumnHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
+		changelogService: changelogService,
 		hub:              hub,
 	}
 }
@@ -49,7 +52,8 @@ func (h *addColumnHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	authorized, err := h.databasesService.CheckUserRole(c, c.MustGet("user_id").(int64), table.DatabaseID, entities.RoleAdmin)
+	userID := c.MustGet("user_id").(int64)
+	authorized, err := h.databasesService.CheckUserRole(c, userID, table.DatabaseID, entities.RoleAdmin)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -71,6 +75,21 @@ func (h *addColumnHandler) Handle(c *gin.Context) {
 	}
 
 	h.hub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
+
+	addedCol := table.Columns[len(table.Columns)-1]
+	columnChange := &entities.ColumnChange{
+		ChangeType: entities.ChangeTypeAdd,
+		Before:     nil,
+		After:      addedCol,
+	}
+
+	changelogItem := columnChange.ToChangelogItem(userID, table.ID, addedCol.ID)
+	err = h.changelogService.WriteChangelog(c, changelogItem)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, common.NewTableResponse(table))
 }
 

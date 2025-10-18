@@ -40,7 +40,7 @@ type ITablesRepository interface {
 	ListByDatabaseID(ctx context.Context, databaseID int64) ([]*entities.Table, error)
 	ListByDatabaseIDs(ctx context.Context, databaseIDs []int64) ([]*entities.Table, error)
 	AddRow(ctx context.Context, table *entities.Table, data map[string]*string, sortIndex *int64) (entities.TableRow, error)
-	DeleteRow(ctx context.Context, tableID string, rowID int64) error
+	DeleteRow(ctx context.Context, tableID string, rowID int64) (entities.TableRow, error)
 	RestoreRow(ctx context.Context, tableID string, rowID int64) error
 	MoveRow(ctx context.Context, tableID string, rowID int64, sortIndex int64) error
 	SetCellValue(ctx context.Context, tableID string, rowID int64, columnID string, value *string) (*entities.RawCellChangeInfo, error)
@@ -70,5 +70,9 @@ type IChangelogRepository interface {
 		tableID string,
 		columnID string,
 		rowID int64,
+	) ([]*entities.ChangelogItemWithUserInfo, error)
+	ListChangelogForTable(
+		ctx context.Context,
+		tableID string,
 	) ([]*entities.ChangelogItemWithUserInfo, error)
 }

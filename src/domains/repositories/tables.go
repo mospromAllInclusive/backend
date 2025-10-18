@@ -149,14 +149,17 @@ func (r *tablesRepository) AddRow(ctx context.Context, table *entities.Table, da
 	return row, err
 }
 
-func (r *tablesRepository) DeleteRow(ctx context.Context, tableID string, rowID int64) error {
+func (r *tablesRepository) DeleteRow(ctx context.Context, tableID string, rowID int64) (entities.TableRow, error) {
 	q := sqrl.Update(fmt.Sprintf("%s.%s", entities.UsersTablespace, tableID)).
 		Set("deleted_at", time.Now()).
-		Where(sqrl.Eq{"id": rowID}).
+		Where(sqrl.Eq{"id": rowID, "deleted_at": nil}).
+		PlaceholderFormat(sqrl.Dollar).
+		Returning("*").
 		PlaceholderFormat(sqrl.Dollar)
 
-	_, err := r.executor.Exec(ctx, q)
-	return err
+	row := make(entities.TableRow)
+	err := r.executor.Run(ctx, &row, q)
+	return row, err
 }
 
 func (r *tablesRepository) RestoreRow(ctx context.Context, tableID string, rowID int64) error {

@@ -58,7 +58,7 @@ func (a *App) initWebServer() {
 func (a *App) initHandlers() []handlers.IHandler {
 	res := make([]handlers.IHandler, 0)
 
-	res = append(res, tables.NewHandlers(a.Services.TablesService, a.Services.DatabasesService, a.Services.FileService, a.Resources.WSHub)...)
+	res = append(res, tables.NewHandlers(a.Services.TablesService, a.Services.DatabasesService, a.Services.FileService, a.Services.ChangelogService, a.Resources.WSHub)...)
 	res = append(res, databases.NewHandlers(a.Services.TablesService, a.Services.DatabasesService, a.Services.UsersService)...)
 	res = append(res, users.NewHandlers(a.Services.AuthService, a.Services.UsersService)...)
 	res = append(res, changelog.NewHandlers(a.Services.ChangelogService, a.Services.TablesService, a.Services.DatabasesService)...)

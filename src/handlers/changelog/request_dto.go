@@ -5,3 +5,7 @@ type cellRequestDto struct {
 	RowID    int64  `json:"row_id" binding:"required"`
 	ColumnID string `json:"column_id" binding:"required"`
 }
+
+type tableRequestDto struct {
+	TableID string `json:"table_id" binding:"required"`
+}

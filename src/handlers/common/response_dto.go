@@ -10,12 +10,12 @@ type TableResponse struct {
 	ID         string              `json:"id"`
 	Name       string              `json:"name"`
 	DatabaseID int64               `json:"database_id"`
-	Columns    []columnForResponse `json:"columns"`
+	Columns    []ColumnForResponse `json:"columns"`
 	CreatedAt  time.Time           `json:"created_at"`
 	TotalRows  *int64              `json:"total_rows,omitempty"`
 }
 
-type columnForResponse struct {
+type ColumnForResponse struct {
 	Name string              `json:"name"`
 	Type entities.ColumnType `json:"type"`
 	ID   string              `json:"id"`
@@ -23,17 +23,12 @@ type columnForResponse struct {
 }
 
 func NewTableResponse(table *entities.Table) *TableResponse {
-	cols := make([]columnForResponse, 0, len(table.Columns))
+	cols := make([]ColumnForResponse, 0, len(table.Columns))
 	for _, col := range table.Columns {
 		if col.DeletedAt != nil {
 			continue
 		}
-		cols = append(cols, columnForResponse{
-			Name: col.Name,
-			Type: col.Type,
-			ID:   col.ID,
-			Enum: col.Enum,
-		})
+		cols = append(cols, NewColumnForResponse(col))
 	}
 	return &TableResponse{
 		ID:         table.ID,
@@ -41,6 +36,15 @@ func NewTableResponse(table *entities.Table) *TableResponse {
 		DatabaseID: table.DatabaseID,
 		Columns:    cols,
 		CreatedAt:  table.CreatedAt,
+	}
+}
+
+func NewColumnForResponse(col *entities.TableColumn) ColumnForResponse {
+	return ColumnForResponse{
+		Name: col.Name,
+		Type: col.Type,
+		ID:   col.ID,
+		Enum: col.Enum,
 	}
 }
 

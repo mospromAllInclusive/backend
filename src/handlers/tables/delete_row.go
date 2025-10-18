@@ -14,6 +14,7 @@ import (
 type deleteRowHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
+	changelogService services.IChangelogService
 	hub              *web_sockets.Hub
 }
 
@@ -21,10 +22,12 @@ func newDeleteRowHandler(
 	hub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
+	changelogService services.IChangelogService,
 ) handlers.IHandler {
 	return &deleteRowHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
+		changelogService: changelogService,
 		hub:              hub,
 	}
 }
@@ -54,7 +57,8 @@ func (h *deleteRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	authorized, err := h.databasesService.CheckUserRole(c, c.MustGet("user_id").(int64), table.DatabaseID, entities.RoleWriter)
+	userID := c.MustGet("user_id").(int64)
+	authorized, err := h.databasesService.CheckUserRole(c, userID, table.DatabaseID, entities.RoleWriter)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -64,13 +68,32 @@ func (h *deleteRowHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	err = h.tablesService.DeleteRow(c, table.ID, req.RowID)
+	row, err := h.tablesService.DeleteRow(c, table.ID, req.RowID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	if row == nil {
+		c.Status(http.StatusOK)
+		return
+	}
+
 	h.hub.Broadcast(tableID, entities.EventActionFetchTable, nil)
+
+	rowChange := &entities.RowChange{
+		ChangeType: entities.ChangeTypeDelete,
+		Before:     entities.NewRowInfoForChangelog(table, row),
+		After:      nil,
+	}
+
+	changelogItem := rowChange.ToChangelogItem(userID, table.ID, row.GetID())
+	err = h.changelogService.WriteChangelog(c, changelogItem)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.Status(http.StatusOK)
 }
 

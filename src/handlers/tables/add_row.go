@@ -15,16 +15,19 @@ type addRowHandler struct {
 	hub              *web_sockets.Hub
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
+	changelogService services.IChangelogService
 }
 
 func newAddRowHandler(
 	hub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
+	changelogService services.IChangelogService,
 ) handlers.IHandler {
 	return &addRowHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
+		changelogService: changelogService,
 		hub:              hub,
 	}
 }
@@ -98,6 +101,20 @@ func (h *addRowHandler) Handle(c *gin.Context) {
 	}
 
 	h.hub.Broadcast(tableID, entities.EventActionFetchTable, nil)
+
+	rowChange := &entities.RowChange{
+		ChangeType: entities.ChangeTypeAdd,
+		Before:     nil,
+		After:      entities.NewRowInfoForChangelog(table, row),
+	}
+
+	changelogItem := rowChange.ToChangelogItem(userID, table.ID, row.GetID())
+	err = h.changelogService.WriteChangelog(c, changelogItem)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, newRowResponse(row))
 }
 

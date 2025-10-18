@@ -9,12 +9,14 @@ import (
 	"backend/src/services/tables"
 	"net/http"
 
+	"github.com/AlekSi/pointer"
 	"github.com/gin-gonic/gin"
 )
 
 type editColumnHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
+	changelogService services.IChangelogService
 	hub              *web_sockets.Hub
 }
 
@@ -22,10 +24,12 @@ func newEditColumnHandler(
 	hub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
+	changelogService services.IChangelogService,
 ) handlers.IHandler {
 	return &editColumnHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
+		changelogService: changelogService,
 		hub:              hub,
 	}
 }
@@ -49,7 +53,8 @@ func (h *editColumnHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	authorized, err := h.databasesService.CheckUserRole(c, c.MustGet("user_id").(int64), table.DatabaseID, entities.RoleAdmin)
+	userID := c.MustGet("user_id").(int64)
+	authorized, err := h.databasesService.CheckUserRole(c, userID, table.DatabaseID, entities.RoleAdmin)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -66,12 +71,14 @@ func (h *editColumnHandler) Handle(c *gin.Context) {
 	}
 
 	columnExists := false
+	var columnBeforeEdit *entities.TableColumn
 	for _, tableColumn := range table.Columns {
 		if tableColumn.ID == col.ID {
 			if tableColumn.DeletedAt != nil {
 				break
 			}
 			columnExists = true
+			columnBeforeEdit = pointer.To(pointer.Get(tableColumn))
 			break
 		}
 	}
@@ -91,13 +98,39 @@ func (h *editColumnHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	table, _, err = h.tablesService.EditTableColumn(c, col, req.TableID)
+	table, edited, err := h.tablesService.EditTableColumn(c, col, req.TableID)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if !edited {
+		c.JSON(http.StatusOK, common.NewTableResponse(table))
+		return
+	}
+
+	h.hub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
+
+	var columnAfterEdit *entities.TableColumn
+	for _, tableColumn := range table.Columns {
+		if tableColumn.ID == col.ID {
+			columnAfterEdit = tableColumn
+			break
+		}
+	}
+
+	columnChange := &entities.ColumnChange{
+		ChangeType: entities.ChangeTypeAdd,
+		Before:     columnBeforeEdit,
+		After:      columnAfterEdit,
+	}
+
+	changelogItem := columnChange.ToChangelogItem(userID, table.ID, col.ID)
+	err = h.changelogService.WriteChangelog(c, changelogItem)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	h.hub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
 	c.JSON(http.StatusOK, common.NewTableResponse(table))
 }
 

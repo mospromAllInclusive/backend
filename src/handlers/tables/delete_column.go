@@ -15,6 +15,7 @@ import (
 type deleteColumnHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
+	changelogService services.IChangelogService
 	hub              *web_sockets.Hub
 }
 
@@ -22,10 +23,12 @@ func newDeleteColumnHandler(
 	hub *web_sockets.Hub,
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
+	changelogService services.IChangelogService,
 ) handlers.IHandler {
 	return &deleteColumnHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
+		changelogService: changelogService,
 		hub:              hub,
 	}
 }
@@ -49,7 +52,8 @@ func (h *deleteColumnHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	authorized, err := h.databasesService.CheckUserRole(c, c.MustGet("user_id").(int64), table.DatabaseID, entities.RoleAdmin)
+	userID := c.MustGet("user_id").(int64)
+	authorized, err := h.databasesService.CheckUserRole(c, userID, table.DatabaseID, entities.RoleAdmin)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -61,11 +65,37 @@ func (h *deleteColumnHandler) Handle(c *gin.Context) {
 
 	table, err = h.tablesService.DeleteColumn(c, req.ColumnID, req.TableID)
 	if err != nil {
+		if tables.IsErrColumnNotFound(err) {
+			c.JSON(http.StatusOK, common.NewTableResponse(table))
+			return
+		}
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	h.hub.Broadcast(req.TableID, entities.EventActionFetchTable, nil)
+
+	var deletedCol *entities.TableColumn
+	for _, col := range table.Columns {
+		if col.ID == req.ColumnID {
+			deletedCol = col
+			break
+		}
+	}
+
+	columnChange := &entities.ColumnChange{
+		ChangeType: entities.ChangeTypeDelete,
+		Before:     deletedCol,
+		After:      nil,
+	}
+
+	changelogItem := columnChange.ToChangelogItem(userID, table.ID, deletedCol.ID)
+	err = h.changelogService.WriteChangelog(c, changelogItem)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, common.NewTableResponse(table))
 }
 
