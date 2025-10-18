@@ -12,6 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const MaxUploadSize = 500 << 20 // 500 MB
+
 type importTableHandler struct {
 	usersHub         *web_sockets.Hub
 	tablesService    services.ITablesService
@@ -55,6 +57,14 @@ func (h *importTableHandler) Handle(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "user does not have admin role"})
 		return
 	}
+
+	if c.Request.ContentLength > MaxUploadSize {
+		c.JSON(400, gin.H{"error": "file too large"})
+		return
+	}
+
+	// Ограничим чтение тела, чтобы не прочитать больше 500МБ
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, MaxUploadSize)
 
 	tableName := c.PostForm("table_name")
 	if tableName == "" {
