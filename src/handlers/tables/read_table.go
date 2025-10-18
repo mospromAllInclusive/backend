@@ -68,7 +68,13 @@ func (h *readTableHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, newTableWithDataResponse(table, rows))
+	total, err := h.tablesService.GetTotalRows(c, table, q)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, newTableWithDataResponse(table, rows, total))
 }
 
 func (h *readTableHandler) Path() string {

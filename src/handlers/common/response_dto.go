@@ -12,6 +12,7 @@ type TableResponse struct {
 	DatabaseID int64               `json:"database_id"`
 	Columns    []columnForResponse `json:"columns"`
 	CreatedAt  time.Time           `json:"created_at"`
+	TotalRows  *int64              `json:"total_rows,omitempty"`
 }
 
 type columnForResponse struct {

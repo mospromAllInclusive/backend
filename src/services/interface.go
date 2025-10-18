@@ -40,6 +40,7 @@ type ITablesService interface {
 	MoveRow(ctx context.Context, tableID string, rowID int64, sortIndex int64) error
 	SetCellValue(ctx context.Context, userID int64, tableID string, rowID int64, columnID string, value *string) error
 	ReadTable(ctx context.Context, table *entities.Table, params entities.ReadTableParams) ([]entities.TableRow, error)
+	GetTotalRows(ctx context.Context, table *entities.Table, params entities.ReadTableParams) (int64, error)
 	ExportTable(ctx context.Context, table *entities.Table) (*excelize.File, error)
 }
 

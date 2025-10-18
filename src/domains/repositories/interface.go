@@ -45,6 +45,7 @@ type ITablesRepository interface {
 	MoveRow(ctx context.Context, tableID string, rowID int64, sortIndex int64) error
 	SetCellValue(ctx context.Context, tableID string, rowID int64, columnID string, value *string) (*entities.RawCellChangeInfo, error)
 	ReadTable(ctx context.Context, table *entities.Table, params *entities.ReadTableParams) ([]entities.TableRow, error)
+	GetTotalRows(ctx context.Context, table *entities.Table, params *entities.ReadTableParams) (int64, error)
 	AddRows(ctx context.Context, table *entities.Table, data []map[string]*string) error
 	AddFullFilledRows(ctx context.Context, table *entities.Table, rows [][]*string) error
 }

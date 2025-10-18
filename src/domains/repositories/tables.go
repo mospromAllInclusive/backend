@@ -222,6 +222,25 @@ func (r *tablesRepository) ReadTable(ctx context.Context, table *entities.Table,
 	return rows, err
 }
 
+func (r *tablesRepository) GetTotalRows(ctx context.Context, table *entities.Table, params *entities.ReadTableParams) (int64, error) {
+	q := sqrl.Select("count(*) as total").
+		From(fmt.Sprintf("%s.%s", entities.UsersTablespace, table.ID)).
+		Where(sqrl.Eq{"deleted_at": nil}).
+		PlaceholderFormat(sqrl.Dollar)
+
+	if params != nil {
+		if ok, filter, filterValue := params.GetFilter(); ok {
+			q = q.Where(sqrl.Expr(filter, filterValue))
+		}
+	}
+
+	var dest struct {
+		Total int64 `db:"total"`
+	}
+	err := r.executor.Run(ctx, &dest, q)
+	return dest.Total, err
+}
+
 func (r *tablesRepository) AddRows(ctx context.Context, table *entities.Table, data []map[string]*string) error {
 	cols := make([]string, 0, len(table.Columns)+1)
 	cols = append(cols, "sort_index_version")

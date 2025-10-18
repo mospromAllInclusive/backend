@@ -3,6 +3,8 @@ package tables
 import (
 	"backend/src/domains/entities"
 	"backend/src/handlers/common"
+
+	"github.com/AlekSi/pointer"
 )
 
 type rowResponse struct {
@@ -30,11 +32,13 @@ type tableWithDataResponse struct {
 	Rows  []*rowResponse        `json:"rows"`
 }
 
-func newTableWithDataResponse(table *entities.Table, rows []entities.TableRow) *tableWithDataResponse {
+func newTableWithDataResponse(table *entities.Table, rows []entities.TableRow, total int64) *tableWithDataResponse {
 	res := &tableWithDataResponse{
 		Table: common.NewTableResponse(table),
 		Rows:  make([]*rowResponse, 0, len(rows)),
 	}
+
+	res.Table.TotalRows = pointer.To(total)
 
 	for _, row := range rows {
 		res.Rows = append(res.Rows, newRowResponse(row))

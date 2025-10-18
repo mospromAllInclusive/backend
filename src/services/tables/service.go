@@ -289,6 +289,10 @@ func (s *service) ReadTable(ctx context.Context, table *entities.Table, params e
 	return s.repo.ReadTable(ctx, table, &params)
 }
 
+func (s *service) GetTotalRows(ctx context.Context, table *entities.Table, params entities.ReadTableParams) (int64, error) {
+	return s.repo.GetTotalRows(ctx, table, &params)
+}
+
 func (s *service) ExportTable(ctx context.Context, table *entities.Table) (*excelize.File, error) {
 	rows, err := s.repo.ReadTable(ctx, table, nil)
 	if err != nil {
