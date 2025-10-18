@@ -63,7 +63,7 @@ func (s *service) ReadExcel(f *excelize.File) ([]string, [][]*string, error) {
 	data := make([][]*string, 0, len(rows)-1)
 	var errs []error
 	for i := 1; i < len(rows); i++ {
-		if len(rows[i]) != len(columns) {
+		if len(rows[i]) > len(columns) {
 			errs = append(errs, &ErrorInvalidRow{
 				Row:             i,
 				ExpectedColumns: len(columns),
@@ -72,14 +72,13 @@ func (s *service) ReadExcel(f *excelize.File) ([]string, [][]*string, error) {
 			continue
 		}
 
-		row := make([]*string, 0, len(columns))
-		for _, v := range rows[i] {
+		row := make([]*string, len(columns))
+		for j, v := range rows[i] {
 			if v == "" {
-				row = append(row, nil)
 				continue
 			}
 
-			row = append(row, pointer.To(v))
+			row[j] = pointer.To(v)
 		}
 
 		data = append(data, row)
