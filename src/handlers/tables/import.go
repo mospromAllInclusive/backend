@@ -14,18 +14,18 @@ import (
 type importTableHandler struct {
 	tablesService    services.ITablesService
 	databasesService services.IDatabasesService
-	fileReader       services.IFileReader
+	fileService      services.IFileService
 }
 
 func newImportTableHandler(
 	tablesService services.ITablesService,
 	databasesService services.IDatabasesService,
-	fileReader services.IFileReader,
+	fileService services.IFileService,
 ) handlers.IHandler {
 	return &importTableHandler{
 		tablesService:    tablesService,
 		databasesService: databasesService,
-		fileReader:       fileReader,
+		fileService:      fileService,
 	}
 }
 
@@ -64,7 +64,7 @@ func (h *importTableHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	columns, data, err := h.fileReader.ReadFile(file)
+	columns, data, err := h.fileService.ReadFile(file)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

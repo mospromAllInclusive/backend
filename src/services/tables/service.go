@@ -13,6 +13,7 @@ import (
 
 	"github.com/AlekSi/pointer"
 	"github.com/google/uuid"
+	"github.com/xuri/excelize/v2"
 )
 
 const (
@@ -24,6 +25,7 @@ type service struct {
 	executor         sql_executor.ISQLExecutor
 	repo             repositories.ITablesRepository
 	changelogService services.IChangelogService
+	fileService      services.IFileService
 	keyMutex         key_mutex.IKeyMutex
 }
 
@@ -31,11 +33,13 @@ func NewService(
 	executor sql_executor.ISQLExecutor,
 	repo repositories.ITablesRepository,
 	changelogService services.IChangelogService,
+	fileService services.IFileService,
 ) services.ITablesService {
 	return &service{
 		executor:         executor,
 		repo:             repo,
 		changelogService: changelogService,
+		fileService:      fileService,
 		keyMutex:         key_mutex.NewKeyMutex(),
 	}
 }
@@ -282,7 +286,16 @@ func (s *service) SetCellValue(ctx context.Context, userID int64, tableID string
 }
 
 func (s *service) ReadTable(ctx context.Context, table *entities.Table, params entities.ReadTableParams) ([]entities.TableRow, error) {
-	return s.repo.ReadTable(ctx, table, params)
+	return s.repo.ReadTable(ctx, table, &params)
+}
+
+func (s *service) ExportTable(ctx context.Context, table *entities.Table) (*excelize.File, error) {
+	rows, err := s.repo.ReadTable(ctx, table, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.fileService.CreateExcel(table, rows)
 }
 
 func genUUID() string {

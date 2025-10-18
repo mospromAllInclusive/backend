@@ -195,23 +195,27 @@ func (r *tablesRepository) SetCellValue(ctx context.Context, tableID string, row
 	return changeInfo, err
 }
 
-func (r *tablesRepository) ReadTable(ctx context.Context, table *entities.Table, params entities.ReadTableParams) ([]entities.TableRow, error) {
-	orderBys := make([]string, 0, 3)
-	if orderBy := params.GetSortBy(table); orderBy != "" {
-		orderBys = append(orderBys, orderBy)
-	}
-	orderBys = append(orderBys, "sort_index ASC", "sort_index_version DESC")
-
+func (r *tablesRepository) ReadTable(ctx context.Context, table *entities.Table, params *entities.ReadTableParams) ([]entities.TableRow, error) {
 	q := sqrl.Select(table.ReturningCols()...).
 		From(fmt.Sprintf("%s.%s", entities.UsersTablespace, table.ID)).
 		Where(sqrl.Eq{"deleted_at": nil}).
-		OrderBy(orderBys...).
-		Limit(uint64(params.GetLimit())).Offset(uint64(params.GetOffset())).
 		PlaceholderFormat(sqrl.Dollar)
 
-	if ok, filter, filterValue := params.GetFilter(); ok {
-		q = q.Where(sqrl.Expr(filter, filterValue))
+	orderBys := make([]string, 0, 3)
+	if params != nil {
+		if ok, filter, filterValue := params.GetFilter(); ok {
+			q = q.Where(sqrl.Expr(filter, filterValue))
+		}
+
+		if orderBy := params.GetSortBy(table); orderBy != "" {
+			orderBys = append(orderBys, orderBy)
+		}
+
+		q = q.Limit(uint64(params.GetLimit())).Offset(uint64(params.GetOffset()))
 	}
+
+	orderBys = append(orderBys, "sort_index ASC", "sort_index_version DESC")
+	q = q.OrderBy(orderBys...)
 
 	var rows []entities.TableRow
 	err := r.executor.Run(ctx, &rows, q)

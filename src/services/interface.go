@@ -40,6 +40,7 @@ type ITablesService interface {
 	MoveRow(ctx context.Context, tableID string, rowID int64, sortIndex int64) error
 	SetCellValue(ctx context.Context, userID int64, tableID string, rowID int64, columnID string, value *string) error
 	ReadTable(ctx context.Context, table *entities.Table, params entities.ReadTableParams) ([]entities.TableRow, error)
+	ExportTable(ctx context.Context, table *entities.Table) (*excelize.File, error)
 }
 
 type IDatabasesService interface {
@@ -62,8 +63,9 @@ type IChangelogService interface {
 	) ([]*entities.ChangelogItemWithUserInfo, error)
 }
 
-type IFileReader interface {
+type IFileService interface {
 	ReadFile(file *multipart.FileHeader) ([]string, [][]*string, error)
 	ReadExcel(f *excelize.File) ([]string, [][]*string, error)
 	ReadCSV(r *csv.Reader) ([]string, [][]*string, error)
+	CreateExcel(table *entities.Table, data []entities.TableRow) (f *excelize.File, err error)
 }

@@ -1,9 +1,11 @@
-package file_reader
+package file_service
 
 import (
+	"backend/src/domains/entities"
 	"backend/src/services"
 	"encoding/csv"
 	"errors"
+	"fmt"
 	"mime/multipart"
 	"path/filepath"
 	"strings"
@@ -12,10 +14,14 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+const (
+	defaultSheetName = "Sheet1"
+)
+
 type service struct {
 }
 
-func NewService() services.IFileReader {
+func NewService() services.IFileService {
 	return &service{}
 }
 
@@ -139,4 +145,47 @@ func (s *service) ReadCSV(r *csv.Reader) ([]string, [][]*string, error) {
 	}
 
 	return columns, data, nil
+}
+
+func (s *service) CreateExcel(table *entities.Table, data []entities.TableRow) (f *excelize.File, err error) {
+	f = excelize.NewFile()
+	defer func() {
+		if err != nil {
+			f.Close()
+		}
+	}()
+
+	_, err = f.NewSheet(defaultSheetName)
+	if err != nil {
+		return nil, err
+	}
+
+	header := make([]string, 0, len(table.Columns))
+	headerIDs := make([]string, 0, len(table.Columns))
+	for _, col := range table.Columns {
+		if col.DeletedAt != nil {
+			continue
+		}
+		header = append(header, col.Name)
+		headerIDs = append(headerIDs, col.ID)
+	}
+
+	err = f.SetSheetRow(defaultSheetName, "A1", &header)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, row := range data {
+		rowValues := make([]interface{}, 0, len(headerIDs))
+		for _, id := range headerIDs {
+			rowValues = append(rowValues, row[id])
+		}
+
+		err = f.SetSheetRow(defaultSheetName, fmt.Sprintf("A%d", 2+i), &rowValues)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return f, nil
 }

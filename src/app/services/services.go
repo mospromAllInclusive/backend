@@ -7,7 +7,7 @@ import (
 	"backend/src/services/auth"
 	"backend/src/services/changelog"
 	"backend/src/services/databases"
-	"backend/src/services/file_reader"
+	"backend/src/services/file_service"
 	"backend/src/services/tables"
 	"backend/src/services/users"
 )
@@ -18,18 +18,18 @@ type Services struct {
 	TablesService    services.ITablesService
 	AuthService      services.IAuthService
 	DatabasesService services.IDatabasesService
-	FileReader       services.IFileReader
+	FileService      services.IFileService
 }
 
 func NewServices(repos *repositories.Repositories, res *resources.Resources) *Services {
 	s := &Services{}
 
+	s.FileService = file_service.NewService()
 	s.UsersService = users.NewService(repos.UsersRepository)
 	s.ChangelogService = changelog.NewService(repos.ChangelogRepository)
-	s.TablesService = tables.NewService(res.PostgresExecutor, repos.TablesRepository, s.ChangelogService)
+	s.TablesService = tables.NewService(res.PostgresExecutor, repos.TablesRepository, s.ChangelogService, s.FileService)
 	s.AuthService = auth.NewService(s.UsersService)
 	s.DatabasesService = databases.NewService(repos.DatabasesRepository)
-	s.FileReader = file_reader.NewService()
 
 	return s
 }
